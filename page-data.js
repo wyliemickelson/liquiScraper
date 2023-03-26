@@ -86,7 +86,7 @@ async function getPageHtmlFromUrl(liquipediaUrl) {
     })
 }
 
-getPageHtmlFromUrl('https://liquipedia.net/dota2/Dota_Pro_Circuit/2023/2/Western_Europe/Division_I')
+getPageHtmlFromUrl('https://liquipedia.net/counterstrike/Intel_Extreme_Masters/2022/Rio/Challengers_Stage')
 .then(data => {
   parseData(data);
   const html = parse(data);

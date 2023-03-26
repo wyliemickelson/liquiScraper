@@ -43,16 +43,25 @@ function getMatches(singleMatchListData) {
     cutoff.setDate(cutoff.getDate() - 1);
     const isComplete = matchTime < cutoff;
 
-    const teams = Array.from(singleMatchData.querySelectorAll('.brkts-matchlist-opponent .name'));
+    const teamsShort = Array.from(singleMatchData.querySelectorAll('.brkts-matchlist-opponent .name'));
+    const teamsLong = Array.from(singleMatchData.querySelectorAll('.brkts-popup-header-opponent .name a'));
     const scores = Array.from(singleMatchData.querySelectorAll('.brkts-matchlist-score .brkts-matchlist-cell-content'));
-
+    const totalScore = scores.reduce((sum, curr) => sum + Number(curr.text), 0);
+    console.log(totalScore);
     // no score means match is yet to be played
     matches.push({
-      team1: teams[0].text,
-      team2: teams[1].text,
+      completed: isComplete,
+      team1Title: {
+        abbr: teamsShort[0].text,
+        full: teamsLong[0].text,
+      },
+      team2Title: {
+        abbr: teamsShort[1].text,
+        full: teamsLong[1].text,
+      },
       team1Score: scores[0].text,
       team2Score: scores[1].text,
-      maps: getMaps(singleMatchData, isComplete),
+      maps: getMaps(singleMatchData, isComplete, totalScore),
     })
   })
 
@@ -64,23 +73,34 @@ function getMapWinner(singleMapData, isComplete) {
     if (!isComplete) {
       return '';
     }
-    const checkMark = Array.from(singleMapData.querySelectorAll('.brkts-popup-spaced img'));
+    const checkMark = Array.from(singleMapData.querySelectorAll('.brkts-popup-spaced img, .brkts-popup-body-element-vertical-centered img'));
     let team1Result = checkMark[0].getAttribute('src');
     team1Result = team1Result.split("/").pop();
     const mapWinner = (team1Result === 'GreenCheck.png') ? 1 : 2;
     return mapWinner;
 }
 
-function getMaps(singleMatchData, isComplete) {
+function getMaps(singleMatchData, isComplete, totalScore) {
   const mapsData = Array.from(singleMatchData.querySelectorAll('.brkts-popup-body-game'));
   let maps = [];
-  const vodLinks = Array.from(singleMatchData.querySelector('.brkts-popup-footer').querySelectorAll('.plainlinks a'));
+  const vodContainer = singleMatchData.querySelector('.brkts-popup-footer');
+  let vodLinks;
+  if (vodContainer) {
+    vodLinks = Array.from(vodContainer.querySelectorAll('.plainlinks a'));
+  }
   mapsData.forEach((singleMapData, i) => {
-    const mapWinner = getMapWinner(singleMapData, isComplete);
+    // default values
+    let mapWinner = '0';
+    let vodLink = '';
+    // check if map was necessary
+    if (totalScore > i) {
+      mapWinner = getMapWinner(singleMapData, isComplete);
+      vodLink = vodLinks ? vodLinks[i].getAttribute('href') : '';
+    }
     maps.push({
       winner: mapWinner,
-      vodLink: isComplete ? vodLinks[i].getAttribute('href') : '',
-    })
+      vodLink: vodLink,
+    }) 
   })
 
   return maps;
