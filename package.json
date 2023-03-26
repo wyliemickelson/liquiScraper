@@ -3,14 +3,17 @@
   "version": "1.0.0",
   "type": "module",
   "description": "",
-  "main": "index.js",
+  "main": "page-data.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node page-data.js",
+    "test": "mocha || true"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
     "node-html-parser": "^6.1.5"
   }
 }
