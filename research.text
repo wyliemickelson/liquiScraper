@@ -1,0 +1,6 @@
+WikiText keywords:
+
+{{matchlist
+{{bracket 
+
+example endpoint: https://liquipedia.net/valorant/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=VCL/2023/North_America/Split_1/Group_Stage

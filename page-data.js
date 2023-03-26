@@ -1,4 +1,6 @@
 import { parse } from "node-html-parser";
+import fs from 'fs';
+import { parseData } from "./parsing.js";
 const headers = {
   "User-Agent": "Spoiler Free Esport Vod Site (wyliecoyote910@gmail.com)",
 };
@@ -9,7 +11,8 @@ const games = ["rocketleague", "valorant"];
 const testURLs = [
   "https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/2022-23/Winter",
   "https://liquipedia.net/valorant/VCL/2023/North_America/Mid-Season_Face_Off",
-  "https://www.freecodecamp.org/news/how-to-validate-urls-in-javascript/"
+  "https://www.freecodecamp.org/news/how-to-validate-urls-in-javascript/",
+  "https://liquipedia.net/dota2/Dota_Pro_Circuit/2023/2/Western_Europe/Division_I",
 ];
 
 // URL functions
@@ -83,13 +86,19 @@ async function getPageHtmlFromUrl(liquipediaUrl) {
     })
 }
 
-getPageHtmlFromUrl(testURLs[0])
+getPageHtmlFromUrl('https://liquipedia.net/dota2/Dota_Pro_Circuit/2023/2/Western_Europe/Division_I')
 .then(data => {
-  console.log(data);
+  parseData(data);
+  const html = parse(data);
+  fs.writeFile('index.html', html.outerHTML, err => {
+    if (err) {
+      console.error(err);
+    }
+  })
 })
-.catch(e => {
-  console.error(e.message);
-});
+// .catch(e => {
+//   console.error(e.message);
+// });
 
 // export functions for unit testing
 export {
