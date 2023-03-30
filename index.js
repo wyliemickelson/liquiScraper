@@ -2,6 +2,7 @@ import { createParser } from "./parser.js";
 import { createScraper, ScrapingError } from "./scraper.js"
 import util from 'util';
 
+
 const options = {
   gameType: 'counterstrike',
   // from main url - obtain general match data and participants
@@ -13,15 +14,19 @@ const options = {
   ],
 }
 
-function main() {
-  generateTournament(options);
+async function main() {
+  const tournament = await generateTournament(options);
+  console.log(util.inspect(tournament, false, null, true /* enable colors */));
 }
 
 async function generateTournament(options) {
   try {
     const tournamentInfo = await getTournamentInfo(options.mainUrl);
-    // const matchBuckets = await getAllMatchBuckets(options.matchUrls);
-    console.log(util.inspect(tournamentInfo, false, null, true /* enable colors */));
+    const matchBuckets = await getAllMatchBuckets(options.matchUrls);
+    return {
+      tournamentInfo,
+      matchBuckets,
+    }
   } catch (e) {
     if (e instanceof ScrapingError) {
       console.error(e.message);
@@ -32,14 +37,12 @@ async function generateTournament(options) {
   }
 }
 
-function getTournamentInfo(url) {
+async function getTournamentInfo(url) {
   const scraper = createScraper(url);
-  return scraper.getDataStrings()
-  .then((dataStrings) => {
-    const { htmlStr, wikiTextStr } = dataStrings;
-    return createParser(htmlStr, wikiTextStr);
-  })
-  .then(parser => parser.getTournamentInfo())
+  const dataStrings = await scraper.getDataStrings();
+  const { htmlStr, wikiTextStr } = dataStrings;
+  const parser = createParser(htmlStr, wikiTextStr);
+  return parser.getTournamentInfo();
 }
 
 function getMatchBuckets(url) {
@@ -55,14 +58,15 @@ function getMatchBuckets(url) {
       const brackets = parser.getBrackets();
       resolve([...matchLists, ...brackets]);
     })
-    .catch(e => { reject(e) })
+    .catch(e => { reject(e); })
   })
 }
 
-function getAllMatchBuckets(urls) {
-  return Promise.all(urls.map(getMatchBuckets))
-    .then(buckets => buckets.flat())
-    .catch(e => { throw e })
+async function getAllMatchBuckets(urls) {
+  try {
+    const buckets = await Promise.all(urls.map(getMatchBuckets));
+    return buckets.flat();
+  } catch (e) { throw e; }
 }
 
 main();

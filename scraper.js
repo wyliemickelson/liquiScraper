@@ -1,3 +1,5 @@
+import { promises as fs } from 'fs';
+
 const headers = {
   "User-Agent": "Spoiler Free Esport Vod Site (wyliecoyote910@gmail.com)",
   "Accept-Encoding": 'gzip',
@@ -47,16 +49,33 @@ export function createScraper(liquipediaUrl) {
     return `https://liquipedia.net/${gameType}/api.php?action=query&prop=revisions&rvslots=*&titles=${pageTitle}&format=json&rvprop=content`;
   }
 
+  //TODO - caching only needed for testing, reformat later
+  async function cacheDataStrings(htmlStr, wikiTextStr) {
+    await fs.writeFile(`./cache/${pageId}-html.text`, htmlStr);
+    await fs.writeFile(`./cache/${pageId}-wikitext.text`, wikiTextStr);
+  }
+
   async function getDataStrings() {
     validateUrl();
     const idRequest = getIdRequest();
     pageId = await fetchPageId(idRequest);
+    let htmlStr;
+    let wikiTextStr;
     
-    const htmlRequest = getHtmlRequest();
-    const htmlStr = await fetchHtml(htmlRequest);
-
-    const wikiTextRequest = getWikiTextReq();
-    const wikiTextStr = await fetchWikiText(wikiTextRequest);
+    //TODO - caching only needed for testing, reformat later
+    const fileExists = async (path) => !!(await fs.stat(path).catch(e => false));
+    if (await fileExists(`./cache/${pageId}-html.text`)) {
+      htmlStr = await fs.readFile(`./cache/${pageId}-html.text`);
+      wikiTextStr = await fs.readFile(`./cache/${pageId}-wikitext.text`);
+    } else {
+      const htmlRequest = getHtmlRequest();
+      htmlStr = await fetchHtml(htmlRequest);
+  
+      const wikiTextRequest = getWikiTextReq();
+      wikiTextStr = await fetchWikiText(wikiTextRequest);
+  
+      await cacheDataStrings(htmlStr, wikiTextStr);
+    }
 
     return {
       htmlStr,
