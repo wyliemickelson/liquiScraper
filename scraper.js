@@ -80,6 +80,7 @@ export function createScraper(liquipediaUrl) {
     return {
       htmlStr,
       wikiTextStr,
+      gameType,
     }
   }
 

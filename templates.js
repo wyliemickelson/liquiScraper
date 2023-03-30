@@ -1,18 +1,21 @@
-const tournament = {
-  tournamentName: string,
-  game: string,
+const tournamentInfo = {
+  sources: {
+    main: '',
+    matchSources: [
+      'url1',
+      'url2',
+    ]
+  },
+  title: string,
+  gameType: string,
   startDate: Date,
   endDate: Date,
-  isComplete: boolean,
-  matchLists: [
-    list1,
-    list2,
-    list3,
-  ],
-  brackets: [
-    bracket1,
-    bracket2,
-    bracket3,
+  isCompleted: boolean,
+  participants: [
+    {
+      name: 'participant1',
+      logoSrc: '',
+    }
   ],
 }
 
