@@ -1,5 +1,5 @@
 import { createParser } from "./parser.js";
-import { getPageHtmlFromUrl, ScrapingError } from "./scraping.js"
+import { getDataStringsFromUrl, ScrapingError } from "./scraping.js"
 import util from 'util';
 
 const options = {
@@ -19,8 +19,9 @@ function main() {
 
 async function generateTournament(options) {
   try {
-    const matchBuckets = await getAllMatchBuckets(options.matchUrls);
-    console.log(util.inspect(matchBuckets, false, null, true /* enable colors */));
+    const tournamentInfo = await getTournamentInfo(options.mainUrl);
+    // const matchBuckets = await getAllMatchBuckets(options.matchUrls);
+    console.log(util.inspect(tournamentInfo, false, null, true /* enable colors */));
   } catch (e) {
     if (e instanceof ScrapingError) {
       console.error(e.message);
@@ -31,10 +32,22 @@ async function generateTournament(options) {
   }
 }
 
+function getTournamentInfo(url) {
+  return getDataStringsFromUrl(url);
+  // .then((dataStrings) => {
+  //   const { htmlStr, wikiTextStr } = dataStrings;
+  //   return createParser(htmlStr, 'html');
+  // })
+  // .then(parser => parser.getTournamentInfo())
+}
+
 function getMatchBuckets(url) {
   return new Promise((resolve, reject) => {
-    getPageHtmlFromUrl(url)
-    .then(htmlStr => createParser(htmlStr, 'html'))
+    getDataStringsFromUrl(url)
+    .then((dataStrings) => {
+      const { htmlStr, wikiTextStr } = dataStrings;
+      return createParser(htmlStr, 'html')
+    })
     .then(parser => {
       const matchLists = parser.getMatchLists();
       const brackets = parser.getBrackets();

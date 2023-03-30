@@ -6,7 +6,9 @@ export function createParser(dataStr, strFormat = 'html', gameType) {
   const $ = (strFormat === 'html' ? cheerio.load(dataStr) : null);
 
   function getTournamentInfo() {
-    return getTeams();
+    return {
+      participants: getTeams(),
+    }
   }
 
   function getBrackets() {
@@ -15,7 +17,6 @@ export function createParser(dataStr, strFormat = 'html', gameType) {
   }
 
   function getMatchLists() {
-    //TODO obtain best of X series data
     const $matchLists = $(".brkts-matchlist");
     const matchLists = $matchLists.map((i, $matchList) => {
       const title = $('.brkts-matchlist-title', $matchList).text()
@@ -29,6 +30,7 @@ export function createParser(dataStr, strFormat = 'html', gameType) {
   }
 
   function getTeams() {
+    //TODO - find way to filter out showmatches or data from anything other than the main participants list
     const $teamCards = $('.teamcard');
     const teams = $teamCards.map((i, $teamCard) => {
       const name = $("center a", $teamCard).text();
@@ -84,6 +86,7 @@ export function createParser(dataStr, strFormat = 'html', gameType) {
   }
   
   function getSeriesType(winnerScore) {
+    //TODO - does not work with matches with an even number of maps eg. (bo2)
     // match score is most likely a bo1 map score if the score is this > 11
     if (winnerScore >= 11) return 1;
     return winnerScore * 2 - 1;

@@ -37,10 +37,7 @@ function validateUrl(url) {
   }
 }
 
-// API Calls
-async function getPageRequestFromUrl(game, liquipediaUrl) {
-  const liquipediaPageTitle = getPageTitle(game, liquipediaUrl);
-  const idRequest = `https://liquipedia.net/${game}/api.php?action=query&format=json&titles=${liquipediaPageTitle}`;
+function getPageId(idRequest, liquipediaUrl) {
   return fetch(idRequest, { headers: headers })
     .then((res) => res.json())
     .then((json) => {
@@ -56,21 +53,62 @@ async function getPageRequestFromUrl(game, liquipediaUrl) {
       if (pageId == -1) {
         throw new ScrapingError(`There is currently no content for page: ${liquipediaUrl}.`);
       }
-      const pageRequest = `https://liquipedia.net/${game}/api.php?action=parse&format=json&pageid=${pageId}`;
-      return pageRequest;
+      return pageId;
     })
 }
 
-export async function getPageHtmlFromUrl(liquipediaUrl) {
+// API Calls
+async function getHtmlRequest(game, liquipediaUrl, pageId) {
+  const pageRequest = `https://liquipedia.net/${game}/api.php?action=parse&format=json&pageid=${pageId}`;
+  return pageRequest;
+}
+
+function getIdRequest(game, liquipediaUrl) {
+  const liquipediaPageTitle = getPageTitle(game, liquipediaUrl);
+  return `https://liquipedia.net/${game}/api.php?action=query&format=json&titles=${liquipediaPageTitle}`;
+}
+
+function getWikiTextReq(game, liquipediaUrl) {
+  const liquipediaPageTitle = getPageTitle(game, liquipediaUrl);
+  return `https://liquipedia.net/${game}/api.php?action=query&prop=revisions&rvslots=*&titles=${liquipediaPageTitle}&format=json&rvprop=content`;
+}
+
+export async function getDataStringsFromUrl(liquipediaUrl) {
   validateUrl(liquipediaUrl);
   const game = getGame(liquipediaUrl);
-  const request = await getPageRequestFromUrl(game, liquipediaUrl);
-  return fetch(request, { headers: headers })
+  const idRequest = getIdRequest(game, liquipediaUrl);
+  const pageId = await getPageId(idRequest, liquipediaUrl);
+  const htmlRequest = await getHtmlRequest(game, liquipediaUrl, pageId);
+  const htmlStr = await fetchHtml(htmlRequest);
+  const wikiTextRequest = getWikiTextReq(game, liquipediaUrl);
+  const wikiTextStr = await fetchWikiText(wikiTextRequest, pageId);
+
+  return {
+    htmlStr,
+    wikiTextStr,
+  }
+}
+
+function fetchWikiText(wikiTextRequest, pageId) {
+  return fetch(wikiTextRequest, { headers: headers })
+    .then((res) => res.json())
+    .then((json) => {
+      let wikiTextStr = json["query"]["pages"][`${pageId}`]["revisions"][0]["slots"]["main"]["*"];
+      if (!wikiTextStr || wikiTextStr.length === 0) {
+        throw new ScrapingError(`Couldn't parse wikitext from ${liquipediaUrl}`);
+      }
+
+      return wikiTextStr;
+    })
+}
+
+function fetchHtml(htmlRequest) {
+  return fetch(htmlRequest, { headers: headers })
     .then((res) => res.json())
     .then((json) => {
       let htmlStr = json["parse"]["text"]["*"];
       if (!htmlStr || htmlStr.length === 0) {
-        throw new ScrapingError(`Couldn't parse ${liquipediaUrl}`);
+        throw new ScrapingError(`Couldn't parse html from ${liquipediaUrl}`);
       }
 
       return htmlStr;
