@@ -2,8 +2,8 @@ import * as cheerio from 'cheerio';
 import moment from 'moment';
 moment().utc().format();
 
-export function createParser(dataStr, strFormat = 'html', gameType) {
-  const $ = (strFormat === 'html' ? cheerio.load(dataStr) : null);
+export function createParser(htmlStr, wikiTextStr) {
+  const $ = cheerio.load(htmlStr);
 
   function getTournamentInfo() {
     return {

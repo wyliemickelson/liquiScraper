@@ -1,5 +1,5 @@
 import { createParser } from "./parser.js";
-import { getDataStringsFromUrl, ScrapingError } from "./scraping.js"
+import { createScraper, ScrapingError } from "./scraper.js"
 import util from 'util';
 
 const options = {
@@ -33,20 +33,22 @@ async function generateTournament(options) {
 }
 
 function getTournamentInfo(url) {
-  return getDataStringsFromUrl(url);
-  // .then((dataStrings) => {
-  //   const { htmlStr, wikiTextStr } = dataStrings;
-  //   return createParser(htmlStr, 'html');
-  // })
-  // .then(parser => parser.getTournamentInfo())
+  const scraper = createScraper(url);
+  return scraper.getDataStrings()
+  .then((dataStrings) => {
+    const { htmlStr, wikiTextStr } = dataStrings;
+    return createParser(htmlStr, wikiTextStr);
+  })
+  .then(parser => parser.getTournamentInfo())
 }
 
 function getMatchBuckets(url) {
+  const scraper = createScraper(url);
   return new Promise((resolve, reject) => {
-    getDataStringsFromUrl(url)
+    scraper.getDataStrings()
     .then((dataStrings) => {
       const { htmlStr, wikiTextStr } = dataStrings;
-      return createParser(htmlStr, 'html')
+      return createParser(htmlStr, wikiTextStr)
     })
     .then(parser => {
       const matchLists = parser.getMatchLists();
