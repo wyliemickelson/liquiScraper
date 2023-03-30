@@ -3,14 +3,13 @@ import { getPageHtmlFromUrl, ScrapingError } from "./scraping.js"
 import util from 'util';
 
 const options = {
-  game: 'dota2',
+  gameType: 'counterstrike',
   // from main url - obtain general match data and participants
-  mainUrl: 'https://liquipedia.net/dota2/The_International/2022',
+  mainUrl: 'https://liquipedia.net/counterstrike/BLAST/Premier/2022/Fall',
   // from matchUrls - obtain matchlists and brackets, then sort combined array by (1st) individual start time (2nd) individual title
   matchUrls: [
-    'https://liquipedia.net/dota2/The_International/2022/Group_Stage_Day_1-2',
-    'https://liquipedia.net/dota2/The_International/2022/Group_Stage_Day_3-4',
-    'https://liquipedia.net/dota2/The_International/2022/Main_Event',
+    'https://liquipedia.net/counterstrike/BLAST/Premier/2022/Fall',
+    'https://liquipedia.net/counterstrike/BLAST/Premier/2022/Spring',
   ],
 }
 
@@ -19,21 +18,36 @@ function main() {
 }
 
 async function generateTournament(options) {
-  const matchLists = await getTournamentData(options.matchUrls[0]);
-  console.log(util.inspect(matchLists, false, null, true /* enable colors */));
+  try {
+    const matchBuckets = await getAllMatchBuckets(options.matchUrls);
+    console.log(util.inspect(matchBuckets, false, null, true /* enable colors */));
+  } catch (e) {
+    if (e instanceof ScrapingError) {
+      console.error(e.message);
+    } else {
+      console.trace(e);
+    }
+    return;
+  }
 }
 
-async function getTournamentData(mainUrl) {
-  return getPageHtmlFromUrl(mainUrl)
+function getMatchBuckets(url) {
+  return new Promise((resolve, reject) => {
+    getPageHtmlFromUrl(url)
     .then(htmlStr => createParser(htmlStr, 'html'))
-    .then(parser => parser.parseHtml())
-    .catch(e => {
-      if (e instanceof ScrapingError) {
-        console.error(e.message);
-      } else {
-        console.trace(e);
-      }
-    });
+    .then(parser => {
+      const matchLists = parser.getMatchLists();
+      const brackets = parser.getBrackets();
+      resolve([...matchLists, ...brackets]);
+    })
+    .catch(e => { reject(e) })
+  })
+}
+
+function getAllMatchBuckets(urls) {
+  return Promise.all(urls.map(getMatchBuckets))
+    .then(buckets => buckets.flat())
+    .catch(e => { throw e })
 }
 
 main();

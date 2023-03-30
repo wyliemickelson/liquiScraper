@@ -54,7 +54,7 @@ async function getPageRequestFromUrl(game, liquipediaUrl) {
       }
       const pageId = pages[0];
       if (pageId == -1) {
-        throw new ScrapingError("There is currently no content for this page.");
+        throw new ScrapingError(`There is currently no content for page: ${liquipediaUrl}.`);
       }
       const pageRequest = `https://liquipedia.net/${game}/api.php?action=parse&format=json&pageid=${pageId}`;
       return pageRequest;

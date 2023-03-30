@@ -2,16 +2,32 @@ import * as cheerio from 'cheerio';
 import moment from 'moment';
 moment().utc().format();
 
-export function createParser(dataStr, type = 'html') {
-  const $ = (type === 'html' ? cheerio.load(dataStr) : null);
+export function createParser(dataStr, strFormat = 'html', gameType) {
+  const $ = (strFormat === 'html' ? cheerio.load(dataStr) : null);
 
-  function parseHtml() {
-    const participants = getTeams();
-    const matchLists = getMatchLists();
-  
-    return matchLists;
-    //TODO add function to parse and return bracket matches and information
+  function getTournamentInfo() {
+    return getTeams();
   }
+
+  function getBrackets() {
+    //TODO
+    return [];
+  }
+
+  function getMatchLists() {
+    //TODO obtain best of X series data
+    const $matchLists = $(".brkts-matchlist");
+    const matchLists = $matchLists.map((i, $matchList) => {
+      const title = $('.brkts-matchlist-title', $matchList).text()
+      return {
+        title,
+        type: 'matchlist',
+        matches: getMatches($matchList),
+      }
+    }).toArray();
+    return matchLists;
+  }
+
   function getTeams() {
     const $teamCards = $('.teamcard');
     const teams = $teamCards.map((i, $teamCard) => {
@@ -24,19 +40,6 @@ export function createParser(dataStr, type = 'html') {
       }
     }).toArray();
     return teams;
-  }
-  
-  function getMatchLists() {
-    //TODO obtain best of X series data
-    const $matchLists = $(".brkts-matchlist");
-    const matchLists = $matchLists.map((i, $matchList) => {
-      const title = $('.brkts-matchlist-title', $matchList).text()
-      return {
-        title,
-        matches: getMatches($matchList),
-      }
-    }).toArray();
-    return matchLists;
   }
   
   function liquiTimeToIso(dirtyTimeStr, timeZone) {
@@ -109,7 +112,9 @@ export function createParser(dataStr, type = 'html') {
   }
 
   return {
-    parseHtml,
+    getTournamentInfo,
+    getMatchLists,
+    getBrackets,
   }
 }
 
