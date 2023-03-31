@@ -140,34 +140,28 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
   }
 
   function getMatchTeams($match, origin) {
-    let teams;
-    if (origin === 'bracket') {
-      // teams come from a bracket
-      const $teams = $('.brkts-opponent-entry', $match);
-      teams = $teams.map((i, $team) => {
-        // thumbnail alt text gives the most consistent team name
-        const name = $('.team-template-lightmode img', $team).attr('alt');
-        // count scores by number of maps won instead - get maps before the teams, then count map wins per team
-        const score = $(`.brkts-opponent-score-inner`, $team).text();
-        return {
-          name,
-          score,
-        }
-      }).toArray();
-    } else {
-      // teams come from a matchlist
-      const $teams = $('.brkts-matchlist-opponent', $match);
-      const $scores = $('.brkts-matchlist-score', $match);
-      teams = $teams.map((i, $team) => {
-        // thumbnail alt text gives the most consistent team name
-        const name = $('.team-template-lightmode img', $team).attr('alt');
-        const score = $($scores.get(i)).text();
-        return {
-          name,
-          score,
-        }
-      }).toArray();
+    // class identifiers differ between brackets and matchlists
+    const scoreClasses = {
+      bracket: '.brkts-opponent-score-inner',
+      matchlist: '.brkts-matchlist-score',
     }
+    const teamClasses = {
+      bracket: '.brkts-opponent-entry',
+      matchlist: '.brkts-matchlist-opponent',
+    }
+
+    const $scores = $(scoreClasses[origin], $match);
+    const $teams = $(teamClasses[origin], $match);
+
+    const teams = $teams.map((i, $team) => {
+      const name = $('.team-template-lightmode img', $team).attr('alt');
+      const score = $($scores.get(i)).text();
+
+      return {
+        name,
+        score,
+      }
+    })
 
     return teams;
   }
