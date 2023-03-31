@@ -37,28 +37,26 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
   }
 
   function compareMatch(a, b) {
+    if (!a.matchId) {
+      throw new Error();
+    }
     const dateA = Date.parse(a.isoTimeStart);
     const dateB = Date.parse(b.isoTimeStart);
-    return dateA - dateB;
+    return parseInt(a.matchId) - parseInt(b.matchId) || dateA - dateB;
   }
 
   function getBracketTitle($bracket) {
-    let $outermostDiv = $($bracket).parent();
-
-    // go to parent of .mw-headline
+    // go to outermost parent of bracket
+    let $outermostDiv = $($bracket);
     while ($($outermostDiv).siblings().children('.mw-headline').length === 0) {
       $outermostDiv = $($outermostDiv).parent();
     }
-    // go to outermost parent of bracket
-    // console.log($($outermostDiv).attr('class'));
-    // go up until .mw-headline
+    // while current div doesnt have a headline, move to prev sibling
     let $closestHeader = $($outermostDiv);
     while ($($closestHeader).find('.mw-headline').length === 0) {
       $closestHeader = $($closestHeader).prev();
     }
-    // $closestHeader = $($outermostDiv).prevUntil('h2, h3, h4, h5, h6, h7');
-    // .first().prev().find('.mw-headline');
-    
+    // get title content from header, stripping away edit boxes
     const title = $($closestHeader).text().replace('[edit]', '');
     return title;
   }
@@ -68,18 +66,24 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
     // get bracket matches through html
     // get bracket matches through wikitext
     // sort matches and conjoin the information
-    // return joined information
+    // return joined information sorted by bracket round
     const $brackets = $('.brkts-bracket');
     const brackets = $brackets.map((i, $bracket) => {
-      
-    const title = getBracketTitle($bracket);
+
+      const title = getBracketTitle($bracket);
       return {
         type: 'bracket',
         title,
         matches: getMatches($bracket, 'bracket')
       }
     }).toArray()
-    brackets.forEach((bracket) => bracket.matches.sort(compareMatch));
+    brackets.forEach((bracket) => {
+      try {
+        bracket.matches.sort(compareMatch)
+      } catch (e) {
+        console.error(`Unable to link bracket matches: Bracket title: ${bracket.title}`);
+      }
+    });
 
     return brackets;
   }
@@ -144,7 +148,7 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
       const $teams = $('.brkts-opponent-entry', $match);
       teams = $teams.map((i, $team) => {
         // thumbnail alt text gives the most consistent team name
-        const name = $('.team-template-lightmode img', $team).attr('alt');
+        const name = isCompleted ? $('.team-template-lightmode img', $team).attr('alt') : null;
         // count scores by number of maps won instead - get maps before the teams, then count map wins per team
         const score = isCompleted ? $(`.brkts-opponent-score-inner`, $team).text() : null;
         return {
@@ -228,7 +232,7 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
     const matchTypeClass = origin === 'matchlist' ? '.brkts-matchlist-match' : '.brkts-round-center';
     const $matches = $(matchTypeClass, $matchList);
     const matches = $matches.map((i, $match) => {
-      
+
       const { isoTimeStart, isCompleted } = getMatchStart($match);
       const [team1, team2] = getMatchTeams($match, isCompleted, origin);
 
