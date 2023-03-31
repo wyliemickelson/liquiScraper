@@ -6,11 +6,16 @@ import { promises as fs } from 'fs';
 
 const sources = {
   // from main url - obtain general match data and participants
-  main: 'https://liquipedia.net/counterstrike/BLAST/Premier/2022/Fall',
+  // main: 'https://liquipedia.net/counterstrike/BLAST/Premier/2022/Fall',
+  // main: 'https://liquipedia.net/rocketleague/Gamers8/2022',
+  main: 'https://liquipedia.net/dota2/The_International/2022',
   // from matchUrls - obtain matchlists and brackets, then sort combined array by (1st) individual start time (2nd) individual title
   matchSources: [
-    'https://liquipedia.net/counterstrike/BLAST/Premier/2022/Fall',
-    'https://liquipedia.net/counterstrike/BLAST/Premier/2022/Spring',
+    'https://liquipedia.net/dota2/The_International/2022/Group_Stage_Day_1-2',
+    'https://liquipedia.net/dota2/The_International/2022/Main_Event',
+    // 'https://liquipedia.net/rocketleague/Gamers8/2022',
+    // 'https://liquipedia.net/counterstrike/BLAST/Premier/2022/Spring',
+    // 'https://liquipedia.net/counterstrike/BLAST/Premier/2022/Fall',
   ],
 }
 
