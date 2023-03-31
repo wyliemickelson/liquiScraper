@@ -63,27 +63,22 @@ const team = {
 
 const matchIdentifiers = {
   valorant: {
-    //checked
     html: 'vlr.gg/{id}',
     wikiText: 'vlr={id}',
   },
   counterstrike: {
-    //checked
     html: 'hltv.org/matches/{id}/match',
     wikiText: 'hltv={id}',
   },
   dota2: {
-    //checked
     html: 'dotabuff.com/matches/{id}',
     wikiText: 'matchid1={id}',
   },
   rocketleague: {
-    //checked
     html: 'shiftrle.gg/matches/{id}',
     wikiText: 'shift={id}',
   },
   leagueoflegends: {
-    //checked
     html: 'https://gol.gg/game/stats/{id}/page-game/',
     wikiText: 'gol={id}',
   },

@@ -1,6 +1,7 @@
 import { createParser } from "./parser.js";
 import { createScraper, ScrapingError } from "./scraper.js"
 import util from 'util';
+import { promises as fs } from 'fs';
 
 
 const sources = {
@@ -15,7 +16,7 @@ const sources = {
 
 async function main() {
   const tournament = await generateTournament(sources);
-  console.log(util.inspect(tournament.details, false, null, true /* enable colors */));
+  console.log(util.inspect(tournament, false, null, true /* enable colors */));
 }
 
 async function generateTournament(sources) {

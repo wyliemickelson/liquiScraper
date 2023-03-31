@@ -4,6 +4,7 @@ moment().utc().format();
 
 export function createParser(htmlStr, wikiTextStr, gameType) {
   const $ = cheerio.load(htmlStr);
+  const matchIdTemplate = getMatchIdTemplate();
 
   function getSideBarInfo(rowTitle) {
     return $('.infobox-description').filter(function () {
@@ -35,9 +36,31 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
     }
   }
 
+  function compareMatch(a, b) {
+    const dateA = Date.parse(a.isoTimeStart);
+    const dateB = Date.parse(b.isoTimeStart);
+    return dateA - dateB;
+  }
+
   function getBrackets() {
     //TODO
-    return [];
+    // get bracket matches through html
+    // get bracket matches through wikitext
+    // sort matches and conjoin the information
+    // return joined information
+    const $brackets = $('.brkts-bracket');
+    const brackets = $brackets.map((i, $bracket) => {
+      const $closestHeader = $($bracket).closest('.brkts-bracket-wrapper').prev();
+      const title = $closestHeader.text().replace('[edit]', '');
+      return {
+        type: 'bracket',
+        title,
+        matches: getMatches($bracket, 'bracket')
+      }
+    }).toArray()
+    brackets.forEach((bracket) => bracket.matches.sort(compareMatch));
+
+    return brackets;
   }
 
   function getMatchLists() {
@@ -47,7 +70,7 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
       return {
         title,
         type: 'matchlist',
-        matches: getMatches($matchList),
+        matches: getMatches($matchList, 'matchlist'),
       }
     }).toArray();
     return matchLists;
@@ -116,9 +139,65 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
     return winnerScore * 2 - 1;
   }
 
-  function getMatches($matchList) {
-    const $matches = $('.brkts-matchlist-match', $matchList);
+  function getMatchIdTemplate(matchUrl) {
+    const matchIdentifiers = {
+      valorant: {
+        urlOrigin: 'vlr.gg',
+        htmlId: 'vlr.gg/{id}',
+        wikiTextId: 'vlr={id}',
+        getStrippedId: function(url) {
+          return new URL(url).pathname;
+        }
+      },
+      counterstrike: {
+        urlOrigin: 'hltv.org',
+        htmlId: 'hltv.org/matches/{id}/match',
+        wikiTextId: 'hltv={id}',
+        getStrippedId: function(url) {
+          return new URL(url).pathname.split('/')[2];
+        }
+      },
+      dota2: {
+        urlOrigin: 'dotabuff.com',
+        htmlId: 'dotabuff.com/matches/{id}',
+        wikiTextId: 'matchid1={id}',
+        getStrippedId: function(url) {
+          return new URL(url).pathname.split('/')[2];
+        }
+      },
+      rocketleague: {
+        urlOrigin: 'shiftrle.gg',
+        htmlId: 'shiftrle.gg/matches/{id}',
+        wikiTextId: 'shift={id}',
+        getStrippedId: function(url) {
+          return new URL(url).pathname.split('/')[2];
+        }
+      },
+      leagueoflegends: {
+        urlOrigin: 'gol.gg',
+        htmlId: 'https://gol.gg/game/stats/{id}/page-game/',
+        wikiTextId: 'gol={id}',
+        getStrippedId: function(url) {
+          return new URL(url).pathname.split('/')[3];
+        }
+      },
+    }
+
+    return matchIdentifiers[gameType];
+  }
+
+  function getMatches($matchList, origin) {
+    const matchTypeClass = origin === 'matchlist' ? '.brkts-matchlist-match' : '.brkts-round-center';
+    const $matches = $(matchTypeClass, $matchList);
     const matches = $matches.map((i, $match) => {
+      const $footer = $('.brkts-popup-footer', $match);
+      const matchIdentifiers = matchIdTemplate;
+      const $footerLinks = $('a', $footer);
+      const matchIdUrl = $footerLinks.filter(function(i, $link) {
+        return $(this).attr('href').includes(matchIdentifiers.urlOrigin);        
+      }).first().attr('href');
+      const matchId = matchIdentifiers.getStrippedId(matchIdUrl);
+
       const { isoTimeStart, isCompleted } = getMatchStart($match);
       const [team1, team2] = getMatchTeams($match, isCompleted);
 
@@ -126,6 +205,8 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
       const bestOf = isCompleted ? getSeriesType(winnerScore) : null;
 
       return {
+        origin,
+        matchId,
         isoTimeStart,
         isCompleted,
         bestOf,
@@ -136,6 +217,18 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
     }).toArray();
 
     return matches;
+  }
+
+  function getMaps($match) {
+    const $vodlinks = $('.plainlinks .vodlink', $footer);
+    const $maps = $('.brkts-popup-body-game', $match);
+    const maps = $maps.map((i, $map) => {
+      return {
+
+      }
+    }).toArray();
+
+    return maps;
   }
 
   return {
