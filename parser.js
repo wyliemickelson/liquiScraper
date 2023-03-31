@@ -4,7 +4,6 @@ moment().utc().format();
 
 export function createParser(htmlStr, wikiTextStr, gameType) {
   const $ = cheerio.load(htmlStr);
-  const matchIdTemplate = getMatchIdTemplate();
 
   function getSideBarInfo(rowTitle) {
     return $('.infobox-description').filter(function () {
@@ -36,13 +35,18 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
     }
   }
 
-  function compareMatch(a, b) {
-    if (!a.matchId) {
-      throw new Error();
+  function sortMatches(matches) {
+    function compareMatchDate(a, b) {
+      const dateA = Date.parse(a.isoTimeStart);
+      const dateB = Date.parse(b.isoTimeStart);
+      return dateA - dateB;
     }
-    const dateA = Date.parse(a.isoTimeStart);
-    const dateB = Date.parse(b.isoTimeStart);
-    return parseInt(a.matchId) - parseInt(b.matchId) || dateA - dateB;
+
+    matches.sort(compareMatchDate);
+    // give each match an id after sorting
+    matches.forEach((match, i) => {
+      match['matchId'] = i;
+    })
   }
 
   function getBracketTitle($bracket) {
@@ -62,28 +66,18 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
   }
 
   function getBrackets() {
-    //TODO
-    // get bracket matches through html
-    // get bracket matches through wikitext
-    // sort matches and conjoin the information
-    // return joined information sorted by bracket round
     const $brackets = $('.brkts-bracket');
     const brackets = $brackets.map((i, $bracket) => {
-
+      const matches = getMatches($bracket, 'bracket');
+      sortMatches(matches);
       const title = getBracketTitle($bracket);
+
       return {
         type: 'bracket',
         title,
-        matches: getMatches($bracket, 'bracket')
+        matches,
       }
     }).toArray()
-    brackets.forEach((bracket) => {
-      try {
-        bracket.matches.sort(compareMatch)
-      } catch (e) {
-        console.error(`Unable to link bracket matches: Bracket title: ${bracket.title}`);
-      }
-    });
 
     return brackets;
   }
@@ -92,12 +86,16 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
     const $matchLists = $(".brkts-matchlist");
     const matchLists = $matchLists.map((i, $matchList) => {
       const title = $('.brkts-matchlist-title', $matchList).text()
+      const matches = getMatches($matchList, 'matchlist');
+      sortMatches(matches);
+
       return {
         title,
         type: 'matchlist',
-        matches: getMatches($matchList, 'matchlist'),
+        matches,
       }
     }).toArray();
+
     return matchLists;
   }
 
@@ -141,16 +139,16 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
     }
   }
 
-  function getMatchTeams($match, isCompleted, origin) {
+  function getMatchTeams($match, origin) {
     let teams;
     if (origin === 'bracket') {
       // teams come from a bracket
       const $teams = $('.brkts-opponent-entry', $match);
       teams = $teams.map((i, $team) => {
         // thumbnail alt text gives the most consistent team name
-        const name = isCompleted ? $('.team-template-lightmode img', $team).attr('alt') : null;
+        const name = $('.team-template-lightmode img', $team).attr('alt');
         // count scores by number of maps won instead - get maps before the teams, then count map wins per team
-        const score = isCompleted ? $(`.brkts-opponent-score-inner`, $team).text() : null;
+        const score = $(`.brkts-opponent-score-inner`, $team).text();
         return {
           name,
           score,
@@ -163,7 +161,7 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
       teams = $teams.map((i, $team) => {
         // thumbnail alt text gives the most consistent team name
         const name = $('.team-template-lightmode img', $team).attr('alt');
-        const score = isCompleted ? $($scores.get(i)).text() : null;
+        const score = $($scores.get(i)).text();
         return {
           name,
           score,
@@ -181,51 +179,19 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
     return winnerScore * 2 - 1;
   }
 
-  function getMatchIdTemplate(matchUrl) {
-    const matchIdentifiers = {
-      valorant: {
-        urlOrigin: 'vlr.gg',
-        htmlId: 'vlr.gg/{id}',
-        wikiTextId: 'vlr={id}',
-        getStrippedId: function (url) {
-          return new URL(url).pathname;
-        }
-      },
-      counterstrike: {
-        urlOrigin: 'hltv.org',
-        htmlId: 'hltv.org/matches/{id}/match',
-        wikiTextId: 'hltv={id}',
-        getStrippedId: function (url) {
-          return new URL(url).pathname.split('/')[2];
-        }
-      },
-      dota2: {
-        urlOrigin: 'dotabuff.com',
-        htmlId: 'dotabuff.com/matches/{id}',
-        wikiTextId: 'matchid1={id}',
-        getStrippedId: function (url) {
-          return new URL(url).pathname.split('/')[2];
-        }
-      },
-      rocketleague: {
-        urlOrigin: 'shiftrle.gg',
-        htmlId: 'shiftrle.gg/matches/{id}',
-        wikiTextId: 'shift={id}',
-        getStrippedId: function (url) {
-          return new URL(url).pathname.split('/')[2];
-        }
-      },
-      leagueoflegends: {
-        urlOrigin: 'gol.gg',
-        htmlId: 'https://gol.gg/game/stats/{id}/page-game/',
-        wikiTextId: 'gol={id}',
-        getStrippedId: function (url) {
-          return new URL(url).pathname.split('/')[3];
-        }
-      },
-    }
+  function getMatchData($match, origin) {
+    const [team1, team2] = getMatchTeams($match, origin);
 
-    return matchIdentifiers[gameType];
+    const winnerScore = Math.max(team1.score, team2.score);
+    const bestOf = getSeriesType(winnerScore);
+    const gamesPlayed = parseInt(team1.score) + parseInt(team2.score);
+
+    return {
+      bestOf,
+      team1,
+      team2,
+      mapData: getMaps($match, gamesPlayed),
+    }
   }
 
   function getMatches($matchList, origin) {
@@ -234,35 +200,13 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
     const matches = $matches.map((i, $match) => {
 
       const { isoTimeStart, isCompleted } = getMatchStart($match);
-      const [team1, team2] = getMatchTeams($match, isCompleted, origin);
-
-      const winnerScore = Math.max(team1.score, team2.score);
-      const bestOf = isCompleted ? getSeriesType(winnerScore) : null;
-      const gamesPlayed = parseInt(team1.score) + parseInt(team2.score);
-
-      const $footer = $('.brkts-popup-footer', $match);
-      const matchIdentifiers = matchIdTemplate;
-      const $footerLinks = $('a', $footer);
-      let matchId;
-      try {
-        const matchIdUrl = $footerLinks.filter(function (i, $link) {
-          return $(this).attr('href').includes(matchIdentifiers.urlOrigin);
-        }).first().attr('href');
-        matchId = matchIdentifiers.getStrippedId(matchIdUrl);
-      } catch {
-        matchId = null;
-      }
 
       return {
         origin,
-        matchId,
+        matchId: null,
         isoTimeStart,
         isCompleted,
-        bestOf,
-        team1,
-        team2,
-        mapData: isCompleted ? getMaps($match, gamesPlayed) : null,
-        // mapData: getMaps($match, isCompleted, bestOf),
+        matchData: isCompleted ? getMatchData($match, origin) : null,
       }
     }).toArray();
 
