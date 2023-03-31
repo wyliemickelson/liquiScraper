@@ -42,6 +42,27 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
     return dateA - dateB;
   }
 
+  function getBracketTitle($bracket) {
+    let $outermostDiv = $($bracket).parent();
+
+    // go to parent of .mw-headline
+    while ($($outermostDiv).siblings().children('.mw-headline').length === 0) {
+      $outermostDiv = $($outermostDiv).parent();
+    }
+    // go to outermost parent of bracket
+    // console.log($($outermostDiv).attr('class'));
+    // go up until .mw-headline
+    let $closestHeader = $($outermostDiv);
+    while ($($closestHeader).find('.mw-headline').length === 0) {
+      $closestHeader = $($closestHeader).prev();
+    }
+    // $closestHeader = $($outermostDiv).prevUntil('h2, h3, h4, h5, h6, h7');
+    // .first().prev().find('.mw-headline');
+    
+    const title = $($closestHeader).text().replace('[edit]', '');
+    return title;
+  }
+
   function getBrackets() {
     //TODO
     // get bracket matches through html
@@ -50,8 +71,8 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
     // return joined information
     const $brackets = $('.brkts-bracket');
     const brackets = $brackets.map((i, $bracket) => {
-      const $closestHeader = $($bracket).closest('.brkts-bracket-wrapper').prev();
-      const title = $closestHeader.text().replace('[edit]', '');
+      
+    const title = getBracketTitle($bracket);
       return {
         type: 'bracket',
         title,
@@ -134,18 +155,17 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
     } else {
       // teams come from a matchlist
       const $teams = $('.brkts-matchlist-opponent', $match);
+      const $scores = $('.brkts-matchlist-score', $match);
       teams = $teams.map((i, $team) => {
         // thumbnail alt text gives the most consistent team name
         const name = $('.team-template-lightmode img', $team).attr('alt');
-        // count scores by number of maps won instead - get maps before the teams, then count map wins per team
-        const score = isCompleted ? $(`.brkts-matchlist-score`, $team).text() : null;
+        const score = isCompleted ? $($scores.get(i)).text() : null;
         return {
           name,
           score,
         }
       }).toArray();
     }
-    
 
     return teams;
   }
