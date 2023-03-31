@@ -61,9 +61,8 @@ function getMatchBuckets(url) {
         return createParser(htmlStr, wikiTextStr, gameType)
       })
       .then(parser => {
-        const matchLists = parser.getMatchLists();
-        const brackets = parser.getBrackets();
-        resolve([...matchLists, ...brackets]);
+        const buckets = parser.getMatchBuckets();
+        resolve(buckets);
       })
       .catch(e => { reject(e); })
   })
