@@ -2,7 +2,8 @@ import * as cheerio from 'cheerio';
 import moment from 'moment';
 moment().utc().format();
 
-export function createParser(htmlStr, wikiTextStr, gameType) {
+export function createParser(options) {
+  const { htmlStr, wikiTextStr, gameType, matchListBestOf } = options;
   const $ = cheerio.load(htmlStr);
 
   function getSideBarInfo(rowTitle) {
@@ -35,7 +36,7 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
     }
   }
 
-  //REFACTOR
+  //TODO - Refactor
   function getTournamentTeams() {
     //TODO - find way to filter out showmatches or data from anything other than the main participants list
     const $teamCards = $('.teamcard');
@@ -75,9 +76,9 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
           matches,
         }
       }).toArray();
-    })
+    }).flat();
 
-    return buckets.flat();
+    return buckets;
   }
 
   function getBucketTitle($bucket, bucketType) {
@@ -169,7 +170,7 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
     const [team1, team2] = getMatchTeams($match, bucketType);
 
     const winnerScore = Math.max(team1.score, team2.score);
-    const bestOf = getSeriesType(winnerScore);
+    const bestOf = getBestOf(bucketType, winnerScore);
     const gamesPlayed = parseInt(team1.score) + parseInt(team2.score);
 
     return {
@@ -180,26 +181,27 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
     }
   }
 
-  // REFACTOR - get map name if game is valorant, csgo, or rocketleague
+  //TODO - Refactor - get map name if game is valorant, csgo, or rocketleague
   function getMapData($match, gamesPlayed) {
     const $footer = $('.brkts-popup-footer', $match);
     const $vodlinks = $('.plainlinks a', $footer);
 
     const $maps = $('.brkts-popup-body-game', $match);
     const maps = $maps.map((i, $map) => {
-      if (i > gamesPlayed - 1) {
-        // map is not needed
-        return;
-      }
-      let vodlink;
+      const mapNeeded = i <= gamesPlayed - 1
+      let vodlink, mapName = null;
       try {
         vodlink = $vodlinks.get(i).attribs['href'];
       } catch {
-        vodlink = 'Unavailable';
+        vodlink = null;
+      }
+      if (['counterstrike', 'valorant'].includes(gameType)) {
+        mapName = $($map).find('.brkts-popup-spaced a').text();
       }
 
       return {
-        winner: getMapWinner($map),
+        winner: mapNeeded ? getMapWinner($map) : 'Skipped',
+        mapName,
         vodlink,
       }
     }).toArray();
@@ -207,12 +209,16 @@ export function createParser(htmlStr, wikiTextStr, gameType) {
     return maps;
   }
 
-  //REFACTOR
-  function getSeriesType(winnerScore) {
-    //TODO - does not work with matches with an even number of maps eg. (bo2)
-    // match score is most likely a bo1 map score if the score is this > 11
-    if (winnerScore >= 11) return 1;
-    return winnerScore * 2 - 1;
+  function getBestOf(bucketType, winnerScore) {
+    // match score is most likely a bo1 map score if the score is > 11
+    const bracket = () => {
+      if (winnerScore >= 11) return 1;
+      return winnerScore * 2 - 1;
+    }
+    const matchlist = () => {
+      return matchListBestOf;
+    }
+    return bucketType === 'bracket' ? bracket() : matchlist()
   }
 
   function getMapWinner($match) {
