@@ -155,11 +155,14 @@ export function createParser(options) {
 
     const teams = $teams.map((i, $team) => {
       const name = $('.team-template-lightmode img', $team).attr('alt');
+      let logoSrc = $('.team-template-lightmode img', $team).attr('src');
+      logoSrc = `https://www.liquipedia.net${logoSrc}`
       const score = $($scores.get(i)).text();
 
       return {
         name,
         score,
+        logoSrc,
       }
     })
 
