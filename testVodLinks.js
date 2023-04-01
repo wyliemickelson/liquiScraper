@@ -1,35 +1,106 @@
 import axios from 'axios';
 
-export async function getVodLinks(tournament) {
-  const mapData = tournament.matchBuckets.map(bucket => {
-    return bucket.matches.map(match => match.matchData.mapData)
-  }).flat(2)
+export async function testVods(tournament) {
+  const vods = getVods(tournament);
+  const twitchVods = getTwitchVods(vods);
+  const youtubeVods = getYoutubeVods(vods);
 
-  await Promise.all(mapData.map(async function(map) {
-    return await fetchVodlink(map);
-  }))
-  return;
+  const twitchVideoIds = twitchVods.map(vod => {
+    // add id to vod object and return id
+    const videoId = new URL(vod.url).pathname.split('/')[2]
+    vod.videoId = videoId;
+    return videoId;
+  });
+  // twitch api calls take 100 video ids max at once
+  const chunkSize = 100;
+  let videoIdChunks = [];
+  for (let i = 0; i < twitchVideoIds.length; i += chunkSize) {
+    const chunk = twitchVideoIds.slice(i, i + chunkSize);
+    videoIdChunks.push(chunk);
+  }
+  const workingTwitchVideoIds = await Promise.all(videoIdChunks.map(async function (chunk) {
+    return await getTwitchVideoStatus(chunk);
+  })).then(res => res.flat());
+
+  // set status of vod objects
+  twitchVods.forEach(vod => {
+    const working = workingTwitchVideoIds.includes(vod.videoId);
+    vod.working = working;
+  })
 }
 
-function fetchVodlink(map) {
-  const url = new URL(map.vodlink);
+export function getTwitchVideoStatus(ids) {
+  const headers = {
+    Authorization: 'Bearer oqdobv06l9dtuczn0vc65ukw7pw1vl',
+    "Client-ID": 'o319w1e5bz60smv2qc2kuffwltv5i0'
+  }
+  return axios.request({
+    headers,
+    method: 'get',
+    url: 'https://api.twitch.tv/helix/videos',
+    params: {
+      id: ids,
+    },
+  }).then(res => res.data.data)
+    .then(data => data.map(video => video.id))
+    // res.data returns an array of video objects with only FOUND videos. if no videos were found, it throws error with data .
+    .catch(err => err.response.data)
+}
+
+function getTwitchVods(vods) {
+  return vods.filter(vod => {
+    let vodUrl;
+    try {
+      vodUrl = new URL(vod.url);
+    } catch {
+      return false;
+    }
+
+    return vodUrl.origin === 'https://www.twitch.tv';
+  })
+}
+
+function getYoutubeVods(vods) {
+  return vods.filter(vod => {
+    let vodUrl;
+    try {
+      vodUrl = new URL(vod.url);
+    } catch {
+      return false;
+    }
+    return ['https://www.youtube.com', 'https://youtu.be'].includes(vodUrl.origin);
+  })
+}
+
+function getVods(tournament) {
+  const vods = tournament.matchBuckets.map(bucket => {
+    return bucket.matches.map(match => {
+      return match.matchData.mapData.map(mapData => mapData.vod);
+    })
+  }).flat(2)
+
+  return vods;
+}
+
+function fetchVodlink(vod) {
+  const url = new URL(vod.url);
   if (url.origin === 'https://www.twitch.tv') {
     const videoId = url.pathname.split('/')[2];
     return getTwitchVideoStatus(videoId).then(res => {
-      map.status = res;
+      vod.status = res;
     }).catch(async e => {
       if (e.name === 'TypeError') {
-        await fetchVodlink(map);
+        await fetchVodlink(vod);
       } else {
         console.error(e.message);
       }
     })
   }
   return fetch(url).then(res => {
-    map.status = res.status;
+    vod.status = res.status;
   }).catch(async e => {
     if (e.name === 'TypeError') {
-      await fetchVodlink(map);
+      await fetchVodlink(vod);
     } else {
       console.error(e.message);
     }
@@ -46,23 +117,6 @@ export function checkYoutube(id) {
     },
   }).then(res => res.status)
     .catch(err => err.response.status)
-}
-
-export function getTwitchVideoStatus(id) {
-  const headers = {
-    Authorization: 'Bearer oqdobv06l9dtuczn0vc65ukw7pw1vl',
-    "Client-ID": 'o319w1e5bz60smv2qc2kuffwltv5i0'
-  }
-  return axios.request({
-    headers,
-    method: 'get',
-    url: 'https://api.twitch.tv/helix/videos',
-    params: {
-      id: [id, id],
-    },
-  }).then(res => res.data)
-  // res.data returns an array of video objects with only FOUND videos. if no videos were found, it throws error with data .
-    .catch(err => err.response.data)
 }
 
 function getToken() {
