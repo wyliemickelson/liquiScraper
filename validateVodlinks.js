@@ -9,13 +9,6 @@ export async function testVods(tournament) {
   const workingTwitchIds = await getWorkingIds(twitchVods, 'twitch');
   const workingYoutubeIds = await getWorkingIds(youtubeVods, 'youtube');
 
-  function setStatus(vods, workingIds) {
-    vods.forEach(vod => {
-      const working = workingIds.includes(vod.videoId);
-      vod.working = working;
-    })
-  }
-  // set status of vod objects
   setStatus(twitchVods, workingTwitchIds);
   setStatus(youtubeVods, workingYoutubeIds);
 }
@@ -50,7 +43,7 @@ async function getWorkingIds(vods, site) {
   return workingIds;
 }
 
-export function fetchValidYoutubeIds(ids) {
+function fetchValidYoutubeIds(ids) {
   return axios.request({
     method: 'get',
     url: 'https://www.googleapis.com/youtube/v3/videos',
@@ -79,6 +72,16 @@ async function fetchValidTwitchIds(ids) {
   }).then(res => res.data.data)
     .then(data => data.map(video => video.id))
     .catch(() => [])
+}
+
+function getVods(tournament) {
+  const vods = tournament.matchBuckets.map(bucket => {
+    return bucket.matches.map(match => {
+      return match.matchData.mapData.map(mapData => mapData.vod);
+    })
+  }).flat(2)
+
+  return vods;
 }
 
 function filterVods(vods) {
@@ -111,14 +114,11 @@ function filterVods(vods) {
   }
 }
 
-function getVods(tournament) {
-  const vods = tournament.matchBuckets.map(bucket => {
-    return bucket.matches.map(match => {
-      return match.matchData.mapData.map(mapData => mapData.vod);
-    })
-  }).flat(2)
-
-  return vods;
+function setStatus(vods, workingIds) {
+  vods.forEach(vod => {
+    const working = workingIds.includes(vod.videoId);
+    vod.working = working;
+  })
 }
 
 function generateTwitchToken() {

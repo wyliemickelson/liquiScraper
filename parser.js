@@ -192,11 +192,11 @@ export function createParser(options) {
     const $maps = $('.brkts-popup-body-game', $match);
     const maps = $maps.map((i, $map) => {
       const mapNeeded = i <= gamesPlayed - 1
-      let vodlink, mapName = null;
+      let vod = {}, mapName = null;
       try {
-        vodlink = $vodlinks.get(i).attribs['href'];
+        vod.url = $vodlinks.get(i).attribs['href'];
       } catch {
-        vodlink = null;
+        vod.url = null;
       }
       if (['counterstrike', 'valorant'].includes(gameType)) {
         mapName = $($map).find('.brkts-popup-spaced a').text();
@@ -205,7 +205,7 @@ export function createParser(options) {
       return {
         winner: mapNeeded ? getMapWinner($map) : 'Skipped',
         mapName,
-        vodlink,
+        vod,
       }
     }).toArray();
 
