@@ -205,7 +205,7 @@ export function createParser(options) {
       return {
         winner: mapNeeded ? getMapWinner($map) : 'Skipped',
         mapName,
-        vod,
+        vod: mapNeeded ? vod : null,
       }
     }).toArray();
 

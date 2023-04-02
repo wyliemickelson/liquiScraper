@@ -53,8 +53,8 @@ function fetchValidYoutubeIds(ids) {
       id: ids.join(','),
     }
   }).then(res => res.data.items)
-  .then(data => data.map(video => video.id))
-  .catch(e => console.error(e.message))
+    .then(data => data.map(video => video.id))
+    .catch(e => console.error(e))
 }
 
 async function fetchValidTwitchIds(ids) {
@@ -75,9 +75,11 @@ async function fetchValidTwitchIds(ids) {
 }
 
 function getVods(tournament) {
+  // gets vods of completed matches only where the vod object exists (does not get vods of skipped maps)
   const vods = tournament.matchBuckets.map(bucket => {
-    return bucket.matches.map(match => {
-      return match.matchData.mapData.map(mapData => mapData.vod);
+    return bucket.matches.filter(match => match.isCompleted).map(match => {
+      return match.matchData.mapData.filter(mapData => mapData.vod)
+        .map(mapData => mapData.vod);
     })
   }).flat(2)
 
@@ -105,9 +107,14 @@ function filterVods(vods) {
       const videoId = vodUrl.pathname.split('/')[1];
       vod.videoId = videoId;
       youtubeVods.push(vod);
+    } else if (vodUrl.origin === 'https://www.youtube.com') {
+      const videoId = vodUrl.searchParams.get('v');
+      vod.videoId = videoId;
+      youtubeVods.push(vod);
     }
   })
 
+  console.log(youtubeVods)
   return {
     twitchVods,
     youtubeVods,
@@ -131,5 +138,5 @@ function generateTwitchToken() {
       grant_type: 'client_credentials',
     }
   }).then(res => res.data.access_token)
-  .catch(e => console.error(e))
+    .catch(e => console.error(e))
 }
