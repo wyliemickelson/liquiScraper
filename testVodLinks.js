@@ -1,4 +1,6 @@
 import axios from 'axios';
+import * as dotenv from 'dotenv'
+dotenv.config();
 
 export async function testVods(tournament) {
   const vods = getVods(tournament);
@@ -36,7 +38,7 @@ async function getWorkingYoutubeVideoIds(youtubeVods) {
   const workingYoutubeVideoIds = await Promise.all(videoIdChunks.map(async (idChunk) => {
     return await fetchValidYoutubeVideoIds(idChunk);
   })).then(res => res.flat())
-  
+
   return workingYoutubeVideoIds;
 }
 
@@ -68,7 +70,7 @@ export function fetchValidYoutubeVideoIds(ids) {
     method: 'get',
     url: 'https://www.googleapis.com/youtube/v3/videos',
     params: {
-      key: 'AIzaSyB0v8pu-H3gG9p-dtJDL0Co3hDuizGNZcg',
+      key: process.env.YOUTUBE_API_KEY,
       part: 'id',
       id: ids.join(','),
     }
@@ -82,7 +84,7 @@ async function fetchValidTwitchVideoIds(ids) {
   // returns an empty array if no ids found
   const headers = {
     Authorization: `Bearer ${await getTwitchToken()}`,
-    "Client-ID": 'o319w1e5bz60smv2qc2kuffwltv5i0'
+    "Client-ID": process.env.TWITCH_CLIENT_ID,
   }
   return axios.request({
     headers,
@@ -151,8 +153,8 @@ function getTwitchToken() {
     url: 'https://id.twitch.tv/oauth2/token',
     method: 'post',
     params: {
-      client_id: 'o319w1e5bz60smv2qc2kuffwltv5i0',
-      client_secret: '1k9k8i0rpybdyc5hhljygp3t5hr31n',
+      client_id: process.env.TWITCH_CLIENT_ID,
+      client_secret: process.env.TWITCH_CLIENT_SECRET,
       grant_type: 'client_credentials',
     }
   }).then(res => res.data.access_token)
