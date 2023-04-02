@@ -64,10 +64,14 @@ async function getAllMatchBuckets(sources) {
       buckets[i].title = 'Playoffs';
     }
     // sort buckets by date of first match, then by title
-    buckets.sort((a, b) => {
-      const dateA = Date.parse(a.matches[0].isoTimeStart);
-      const dateB = Date.parse(b.matches[0].isoTimeStart);
-      return dateA - dateB || a.title.toUpperCase() - b.title.toUpperCase();
+    buckets = buckets.sort((a, b) => {
+      //strip off hours and minutes to compare month and day only
+      const dateA = new Date(new Date(a.matches[0].isoTimeStart).toDateString());
+      const dateB = new Date(new Date(b.matches[0].isoTimeStart).toDateString());
+      
+      const titleA = a.title.toUpperCase();
+      const titleB = b.title.toUpperCase();
+      return dateA - dateB || titleA.localeCompare(titleB);
     })
     return buckets;
   } catch (e) { throw e; }
