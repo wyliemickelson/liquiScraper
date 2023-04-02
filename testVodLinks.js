@@ -2,9 +2,45 @@ import axios from 'axios';
 
 export async function testVods(tournament) {
   const vods = getVods(tournament);
-  const twitchVods = getTwitchVods(vods);
-  const youtubeVods = getYoutubeVods(vods);
+  const { twitchVods, youtubeVods } = filterVods(vods);
+  // const twitchVods = getTwitchVods(vods);
+  // const youtubeVods = getYoutubeVods(vods);
+  const workingTwitchVideoIds = await getWorkingTwitchVideoIds(twitchVods);
+  const workingYoutubeVideoIds = await getWorkingYoutubeVideoIds(youtubeVods);
 
+  function setStatus(vods, workingVideoIds) {
+    vods.forEach(vod => {
+      const working = workingVideoIds.includes(vod.videoId);
+      vod.working = working;
+    })
+  }
+  // set status of vod objects
+  setStatus(twitchVods, workingTwitchVideoIds);
+  setStatus(youtubeVods, workingYoutubeVideoIds);
+}
+
+async function getWorkingYoutubeVideoIds(youtubeVods) {
+  const youtubeVideoIds = youtubeVods.map(vod => {
+    // add id to vod object and return id
+    const videoId = new URL(vod.url).pathname.split('/')[1]
+    vod.videoId = videoId;
+    return videoId;
+  });
+  const chunkSize = 50;
+  let videoIdChunks = [];
+  for (let i = 0; i < youtubeVideoIds.length; i += chunkSize) {
+    const chunk = youtubeVideoIds.slice(i, i + chunkSize);
+    videoIdChunks.push(chunk);
+  }
+
+  const workingYoutubeVideoIds = await Promise.all(videoIdChunks.map(async (idChunk) => {
+    return await fetchValidYoutubeVideoIds(idChunk);
+  })).then(res => res.flat())
+  
+  return workingYoutubeVideoIds;
+}
+
+async function getWorkingTwitchVideoIds(twitchVods) {
   const twitchVideoIds = twitchVods.map(vod => {
     // add id to vod object and return id
     const videoId = new URL(vod.url).pathname.split('/')[2]
@@ -18,20 +54,34 @@ export async function testVods(tournament) {
     const chunk = twitchVideoIds.slice(i, i + chunkSize);
     videoIdChunks.push(chunk);
   }
-  const workingTwitchVideoIds = await Promise.all(videoIdChunks.map(async function (chunk) {
-    return await getTwitchVideoStatus(chunk);
+  // call twitch api
+  const workingTwitchVideoIds = await Promise.all(videoIdChunks.map(async function (idChunk) {
+    return await fetchValidTwitchVideoIds(idChunk);
   })).then(res => res.flat());
 
-  // set status of vod objects
-  twitchVods.forEach(vod => {
-    const working = workingTwitchVideoIds.includes(vod.videoId);
-    vod.working = working;
-  })
+  return workingTwitchVideoIds;
 }
 
-export function getTwitchVideoStatus(ids) {
+export function fetchValidYoutubeVideoIds(ids) {
+  // max ids per request is 50
+  return axios.request({
+    method: 'get',
+    url: 'https://www.googleapis.com/youtube/v3/videos',
+    params: {
+      key: 'AIzaSyB0v8pu-H3gG9p-dtJDL0Co3hDuizGNZcg',
+      part: 'id',
+      id: ids.join(','),
+    }
+  }).then(res => res.data.items)
+  .then(data => data.map(video => video.id))
+  .catch(e => console.error(e.message))
+}
+
+async function fetchValidTwitchVideoIds(ids) {
+  // https://dev.twitch.tv/docs/api/videos/
+  // returns an empty array if no ids found
   const headers = {
-    Authorization: 'Bearer oqdobv06l9dtuczn0vc65ukw7pw1vl',
+    Authorization: `Bearer ${await getTwitchToken()}`,
     "Client-ID": 'o319w1e5bz60smv2qc2kuffwltv5i0'
   }
   return axios.request({
@@ -43,33 +93,30 @@ export function getTwitchVideoStatus(ids) {
     },
   }).then(res => res.data.data)
     .then(data => data.map(video => video.id))
-    // res.data returns an array of video objects with only FOUND videos. if no videos were found, it throws error with data .
-    .catch(err => err.response.data)
+    .catch(() => [])
 }
 
-function getTwitchVods(vods) {
-  return vods.filter(vod => {
+function filterVods(vods) {
+  let twitchVods = [], youtubeVods = [];
+  vods.forEach(vod => {
     let vodUrl;
     try {
       vodUrl = new URL(vod.url);
     } catch {
-      return false;
+      return;
     }
-
-    return vodUrl.origin === 'https://www.twitch.tv';
-  })
-}
-
-function getYoutubeVods(vods) {
-  return vods.filter(vod => {
-    let vodUrl;
-    try {
-      vodUrl = new URL(vod.url);
-    } catch {
-      return false;
+    if (['https://www.twitch.tv'].includes(vodUrl.origin)) {
+      twitchVods.push(vod);
     }
-    return ['https://www.youtube.com', 'https://youtu.be'].includes(vodUrl.origin);
+    else if (['https://www.youtube.com', 'https://youtu.be'].includes(vodUrl.origin)) {
+      youtubeVods.push(vod);
+    }
   })
+
+  return {
+    twitchVods,
+    youtubeVods,
+  }
 }
 
 function getVods(tournament) {
@@ -82,32 +129,12 @@ function getVods(tournament) {
   return vods;
 }
 
-function fetchVodlink(vod) {
-  const url = new URL(vod.url);
-  if (url.origin === 'https://www.twitch.tv') {
-    const videoId = url.pathname.split('/')[2];
-    return getTwitchVideoStatus(videoId).then(res => {
-      vod.status = res;
-    }).catch(async e => {
-      if (e.name === 'TypeError') {
-        await fetchVodlink(vod);
-      } else {
-        console.error(e.message);
-      }
-    })
-  }
-  return fetch(url).then(res => {
-    vod.status = res.status;
-  }).catch(async e => {
-    if (e.name === 'TypeError') {
-      await fetchVodlink(vod);
-    } else {
-      console.error(e.message);
-    }
-  })
-}
 
-export function checkYoutube(id) {
+
+
+
+///////////
+function checkYoutube(id) {
   return axios.request({
     url: 'oembed',
     baseURL: 'https://www.youtube.com/',
@@ -119,7 +146,7 @@ export function checkYoutube(id) {
     .catch(err => err.response.status)
 }
 
-function getToken() {
+function getTwitchToken() {
   return axios.request({
     url: 'https://id.twitch.tv/oauth2/token',
     method: 'post',
@@ -128,5 +155,19 @@ function getToken() {
       client_secret: '1k9k8i0rpybdyc5hhljygp3t5hr31n',
       grant_type: 'client_credentials',
     }
-  })
+  }).then(res => res.data.access_token)
+  .catch(e => console.error(e))
 }
+
+// function getYoutubeToken() {
+//   return axios.request({
+//     url: 'https://id.twitch.tv/oauth2/token',
+//     method: 'post',
+//     params: {
+//       client_id: 'o319w1e5bz60smv2qc2kuffwltv5i0',
+//       client_secret: '1k9k8i0rpybdyc5hhljygp3t5hr31n',
+//       grant_type: 'client_credentials',
+//     }
+//   }).then(res => res.data.access_token)
+//   .catch(e => console.error(e))
+// }
