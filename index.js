@@ -1,64 +1,26 @@
+import util from 'util';
 import { createParser } from "./parser.js";
 import { createScraper, ScrapingError } from "./scraper.js"
-
-import util from 'util';
-import { promises as fs } from 'fs';
-
-import { testVods, fetchValidYoutubeIds } from "./testVodLinks.js";
-
-
-const sources = {
-  // from main url - obtain general match data and participants
-  // main: 'https://liquipedia.net/leagueoflegends/LEC/2023/Winter',
-  // main: 'https://liquipedia.net/counterstrike/BLAST/Premier/2022/Fall',
-  // main: 'https://liquipedia.net/valorant/VCL/2023/North_America/Split_1',
-  // main: 'https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/2022-23/Fall',
-  // main: 'https://liquipedia.net/counterstrike/BLAST/Premier/2023/Spring/Showdown/Americas',
-  main: 'https://liquipedia.net/dota2/The_International/2022',
-  // main: 'https://liquipedia.net/dota2/GAMERS_GALAXY/Invitational_Series/Dubai/2022',
-  // from matchUrls - obtain matchlists and brackets, then sort combined array by (1st) individual start time (2nd) individual title
-  matchSources: [
-    // {
-    //   // url: 'https://liquipedia.net/rocketleague/Rocket_League_Championship_Series/2022-23/Fall',
-
-    // },
-    // {
-    //   url: 'https://liquipedia.net/leagueoflegends/LEC/2023/Winter/Group_Stage',
-    //   matchListBestOf: 3,
-    // },
-    // {
-    //   url: 'https://liquipedia.net/leagueoflegends/LEC/2023/Winter/Playoffs',
-    // },
-    // 'https://liquipedia.net/leagueoflegends/LEC/2023/Winter/Group_Stage',
-    // 'https://liquipedia.net/leagueoflegends/LEC/2023/Winter/Playoffs',
-    // 'https://liquipedia.net/valorant/VCL/2023/North_America/Split_1/Group_Stage',
-    // 'https://liquipedia.net/dota2/GAMERS_GALAXY/Invitational_Series/Dubai/2022',
-    {url: 'https://liquipedia.net/dota2/The_International/2022/Group_Stage_Day_1-2',
-    matchListBestOf: 2,},
-    {url: 'https://liquipedia.net/dota2/The_International/2022/Main_Event',
-    matchListBestOf: 2,},
-    // ,
-    // 'https://liquipedia.net/counterstrike/BLAST/Premier/2023/Spring/Showdown/Americas',
-    // 'https://liquipedia.net/counterstrike/BLAST/Premier/2022/Spring',
-    // 'https://liquipedia.net/counterstrike/BLAST/Premier/2022/Fall',
-  ],
-}
+import { testVods } from "./validateVodlinks.js";
+import { sampleSources } from "./sampleSources.js"
 
 async function main() {
-  const tournament = await generateTournament(sources);
-  // await testVods(tournament);
-  await fetchValidYoutubeIds(['1']);
-  // console.log(util.inspect(tournament.matchBuckets, false, null, true /* enable colors */));
+  try {
+    const tournament = await generateTournament(sampleSources[0]);
+    console.log(util.inspect(tournament.matchBuckets, false, null, true /* enable colors */));
+  } catch (e) { return; }
 }
 
 async function generateTournament(sources) {
   try {
     const details = await getTournamentDetails(sources);
     const matchBuckets = await getAllMatchBuckets(sources.matchSources);
-    return {
+    const tournament = {
       details,
       matchBuckets,
     }
+    await testVods(tournament);
+    return tournament;
   } catch (e) {
     if (e instanceof ScrapingError) {
       console.error(e.message);

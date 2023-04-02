@@ -45,14 +45,9 @@ export function createScraper(liquipediaUrl) {
     return `https://liquipedia.net/${gameType}/api.php?action=query&format=json&titles=${pageTitle}`;
   }
 
-  function getWikiTextReq() {
-    return `https://liquipedia.net/${gameType}/api.php?action=query&prop=revisions&rvslots=*&titles=${pageTitle}&format=json&rvprop=content`;
-  }
-
   //TODO - caching only needed for testing, reformat later
-  async function cacheDataStrings(htmlStr, wikiTextStr) {
+  async function cacheDataStrings(htmlStr) {
     await fs.writeFile(`./cache/${pageId}-html.text`, htmlStr);
-    await fs.writeFile(`./cache/${pageId}-wikitext.text`, wikiTextStr);
   }
 
   async function getDataStrings() {
@@ -60,26 +55,20 @@ export function createScraper(liquipediaUrl) {
     const idRequest = getIdRequest();
     pageId = await fetchPageId(idRequest);
     let htmlStr;
-    let wikiTextStr;
     
     //TODO - caching only needed for testing, reformat later
     const fileExists = async (path) => !!(await fs.stat(path).catch(e => false));
     if (await fileExists(`./cache/${pageId}-html.text`)) {
       htmlStr = await fs.readFile(`./cache/${pageId}-html.text`);
-      wikiTextStr = await fs.readFile(`./cache/${pageId}-wikitext.text`);
     } else {
       const htmlRequest = getHtmlRequest();
       htmlStr = await fetchHtml(htmlRequest);
   
-      const wikiTextRequest = getWikiTextReq();
-      wikiTextStr = await fetchWikiText(wikiTextRequest);
-  
-      await cacheDataStrings(htmlStr, wikiTextStr);
+      await cacheDataStrings(htmlStr);
     }
 
     return {
       htmlStr,
-      wikiTextStr,
       gameType,
     }
   }
@@ -100,16 +89,6 @@ export function createScraper(liquipediaUrl) {
       throw new ScrapingError(`There is currently no content for page: ${url}.`);
     }
     return pageId;
-  }
-
-  async function fetchWikiText(wikiTextRequest) {
-    const res = await fetch(wikiTextRequest, { headers: headers });
-    const json = await res.json();
-    let wikiTextStr = json["query"]["pages"][`${pageId}`]["revisions"][0]["slots"]["main"]["*"];
-    if (!wikiTextStr || wikiTextStr.length === 0) {
-      throw new ScrapingError(`Couldn't parse wikitext from ${url}`);
-    }
-    return wikiTextStr;
   }
 
   async function fetchHtml(htmlRequest) {

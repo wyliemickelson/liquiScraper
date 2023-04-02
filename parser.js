@@ -3,7 +3,7 @@ import moment from 'moment';
 moment().utc().format();
 
 export function createParser(options) {
-  const { htmlStr, wikiTextStr, gameType, matchListBestOf } = options;
+  const { htmlStr, gameType, matchListBestOf } = options;
   const $ = cheerio.load(htmlStr);
 
   function getSideBarInfo(rowTitle) {
