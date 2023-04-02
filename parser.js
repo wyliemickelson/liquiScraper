@@ -15,11 +15,13 @@ export function createParser(options) {
   function getTournamentDetails(sources) {
     // some titles have linkboxes with text [e][h], so trim them
     const title = $('.infobox-header').first().text().replace('[e][h]', '');
-    const startDate = new Date(getSideBarInfo('Start Date:'));
-    const endDate = new Date(getSideBarInfo('End Date:'));
 
-    const today = new Date();
-    const isCompleted = endDate.getDay() < today.getDay();
+    //strip off hours and minutes to compare month and day only
+    const startDate = new Date(new Date(getSideBarInfo('Start Date:')).toDateString());
+    const endDate = new Date(new Date(getSideBarInfo('End Date:')).toDateString());
+
+    const today = new Date(new Date().toDateString());
+    const isCompleted = endDate < today;
 
     let mainImgSrc = $('.infobox-image img').attr('src');
     mainImgSrc = `https://www.liquipedia.net${mainImgSrc}`;
@@ -68,11 +70,13 @@ export function createParser(options) {
       return bucket.buckets.map((i, $bucket) => {
         const title = getBucketTitle($bucket, bucket.type);
         const matches = getMatches($bucket, bucket.type);
+        const isCompleted = matches.every(match => match.isCompleted);
         generateIds(matches);
 
         return {
           type: bucket.type,
           title,
+          isCompleted,
           matches,
         }
       }).toArray();
@@ -164,7 +168,7 @@ export function createParser(options) {
         score,
         logoSrc,
       }
-    })
+    }).toArray();
 
     return teams;
   }

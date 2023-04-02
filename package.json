@@ -17,6 +17,7 @@
     "dotenv": "^16.0.3",
     "mocha": "^10.2.0",
     "moment": "^2.29.4",
+    "mongodb": "^5.1.0",
     "youtube-video-exists": "^0.1.2"
   }
 }

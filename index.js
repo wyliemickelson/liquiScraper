@@ -3,12 +3,11 @@ import { createParser } from "./parser.js";
 import { createScraper, ScrapingError } from "./scraper.js"
 import { testVods } from "./validateVodlinks.js";
 import { sampleSources } from "./sampleSources.js"
+import { saveTournament } from "./save.js"
 
 async function main() {
-  try {
-    const tournament = await generateTournament(sampleSources[0]);
-    console.log(util.inspect(tournament.matchBuckets, false, null, true /* enable colors */));
-  } catch (e) { return; }
+    const tournament = await generateTournament(sampleSources[5]);
+    await saveTournament(tournament).catch(console.dir);;
 }
 
 async function generateTournament(sources) {

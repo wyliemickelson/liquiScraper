@@ -114,7 +114,6 @@ function filterVods(vods) {
     }
   })
 
-  console.log(youtubeVods)
   return {
     twitchVods,
     youtubeVods,
