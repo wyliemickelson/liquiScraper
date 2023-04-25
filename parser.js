@@ -1,9 +1,12 @@
 import * as cheerio from 'cheerio';
 import moment from 'moment';
+import { nanoid } from 'nanoid'
+import { downloadImage } from './image-downloader.js'
+import { closestMatch } from 'closest-match';
 moment().utc().format();
 
 export function createParser(options) {
-  const { htmlStr, gameType, matchListBestOf } = options;
+  const { htmlStr, gameType, matchListBestOf, tournamentDetails } = options;
   const $ = cheerio.load(htmlStr);
 
   function getSideBarInfo(rowTitle) {
@@ -17,11 +20,11 @@ export function createParser(options) {
     const title = $('.infobox-header').first().text().replace('[e][h]', '');
 
     //strip off hours and minutes to compare month and day only
-    const startDate = new Date(new Date(getSideBarInfo('Start Date:')).toDateString());
-    const endDate = new Date(new Date(getSideBarInfo('End Date:')).toDateString());
+    const dateStart = new Date(new Date(getSideBarInfo('Start Date:')).toDateString());
+    const dateEnd = new Date(new Date(getSideBarInfo('End Date:')).toDateString());
 
     const today = new Date(new Date().toDateString());
-    const isCompleted = endDate < today;
+    const isCompleted = dateEnd < today;
 
     let mainImgSrc = $('.infobox-image img').attr('src');
     mainImgSrc = `https://www.liquipedia.net${mainImgSrc}`;
@@ -29,10 +32,10 @@ export function createParser(options) {
     return {
       sources,
       title,
-      mainImgSrc,
+      mainImgSrc: downloadImage(mainImgSrc),
       gameType,
-      startDate,
-      endDate,
+      dateStart,
+      dateEnd,
       isCompleted,
       participants: getTournamentTeams(),
     }
@@ -44,11 +47,12 @@ export function createParser(options) {
     const $teamCards = $('.teamcard');
     const teams = $teamCards.map((i, $teamCard) => {
       const name = $("center a", $teamCard).text();
-      let logoSrc = $('.logo-lightmode img', $teamCard).attr('src');
+      let logoSrc = $('.logo-darkmode img', $teamCard).attr('src');
       logoSrc = `https://www.liquipedia.net${logoSrc}`;
       return {
+        _id: nanoid(12),
         name,
-        logoSrc,
+        logoSrc: downloadImage(logoSrc),
       }
     }).toArray();
     return teams;
@@ -71,10 +75,11 @@ export function createParser(options) {
         const title = getBucketTitle($bucket, bucket.type);
         const matches = getMatches($bucket, bucket.type);
         const isCompleted = matches.every(match => match.isCompleted);
-        generateIds(matches);
+        sortMatches(matches);
 
         return {
-          type: bucket.type,
+          _id: nanoid(12),
+          bucketType: bucket.type,
           title,
           isCompleted,
           matches,
@@ -100,7 +105,8 @@ export function createParser(options) {
       $closestHeader = $($closestHeader).prev();
     }
     // get title content from header, stripping away edit boxes
-    const title = $($closestHeader).text().replace('[edit]', '');
+    let title = $($closestHeader).text().replace('[edit]', '');
+    title = (title === 'Results') ? 'Playoffs' : title
     return title;
   }
 
@@ -111,13 +117,14 @@ export function createParser(options) {
     }
     const $matches = $(matchTypeClasses[bucketType], $matchBucket);
     const matches = $matches.map((i, $match) => {
-      const { isoTimeStart, isCompleted } = getMatchStart($match);
+      const { dateStart, isCompleted } = getMatchStart($match);
 
       return {
-        bucketType,
-        matchId: null,
-        isoTimeStart,
+        bracketRound: null,
+        _id: nanoid(12),
+        dateStart,
         isCompleted,
+        revealed: bucketType === 'matchlist',
         matchData: isCompleted ? getMatchData($match, bucketType) : null,
       }
     }).toArray();
@@ -127,20 +134,12 @@ export function createParser(options) {
 
   function sortMatches(matches) {
     function compareMatchDate(a, b) {
-      const dateA = Date.parse(a.isoTimeStart);
-      const dateB = Date.parse(b.isoTimeStart);
+      const dateA = Date.parse(a.dateStart);
+      const dateB = Date.parse(b.dateStart);
       return dateA - dateB;
     }
 
     return matches.sort(compareMatchDate);
-  }
-
-  function generateIds(matches) {
-    sortMatches(matches);
-    // only give ids after they're sorted
-    matches.forEach((match, i) => {
-      match['matchId'] = i;
-    })
   }
 
   function getMatchTeams($match, bucketType) {
@@ -156,17 +155,23 @@ export function createParser(options) {
 
     const $scores = $(scoreClasses[bucketType], $match);
     const $teams = $(teamClasses[bucketType], $match);
+    const tournamentTeamNames = tournamentDetails.participants.reduce((accum, p) => [...accum, p.name], [])
 
     const teams = $teams.map((i, $team) => {
-      const name = $('.team-template-lightmode img', $team).attr('alt');
-      let logoSrc = $('.team-template-lightmode img', $team).attr('src');
-      logoSrc = `https://www.liquipedia.net${logoSrc}`
+      const name = $('.team-template-darkmode img', $team).attr('alt');
+      const nameMatch = closestMatch(name, tournamentTeamNames)
+      const teamMatch = tournamentDetails.participants.find(p => p.name === nameMatch)
+      const teamId = teamMatch._id
+    
+      // let logoSrc = $('.team-template-darkmode img', $team).attr('src');
+      // logoSrc = `https://www.liquipedia.net${logoSrc}`
       const score = $($scores.get(i)).text();
 
       return {
-        name,
+        _id: teamId,
+        // name,
         score,
-        logoSrc,
+        // logoSrc: downloadImage(logoSrc),
       }
     }).toArray();
 
@@ -207,6 +212,7 @@ export function createParser(options) {
       }
 
       return {
+        _id: nanoid(12),
         winner: mapNeeded ? getMapWinner($map) : 'Skipped',
         mapName,
         vod: mapNeeded ? vod : null,
@@ -234,7 +240,7 @@ export function createParser(options) {
     let checkMarkSrc = $checkMark.attr('src');
     // get end of src path
     checkMarkSrc = checkMarkSrc.split("/").pop();
-    const mapWinner = (checkMarkSrc === 'GreenCheck.png') ? 1 : 2;
+    const mapWinner = (checkMarkSrc === 'GreenCheck.png') ? '1' : '2';
     return mapWinner;
   }
 
@@ -244,10 +250,11 @@ export function createParser(options) {
 
     const dirtyTimeStr = $timer.text();
     const timeZone = $('.timer-object abbr', $match).attr('data-tz');
-    const isoTimeStart = liquiTimeToIso(dirtyTimeStr, timeZone);
+    let dateStart = liquiTimeToIso(dirtyTimeStr, timeZone);
+    dateStart = isNaN(dateStart) ? null : dateStart
 
     return {
-      isoTimeStart,
+      dateStart,
       isCompleted,
     }
   }

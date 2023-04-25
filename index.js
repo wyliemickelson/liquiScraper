@@ -1,4 +1,5 @@
 import util from 'util';
+import { nanoid } from 'nanoid'
 import { createParser } from "./parser.js";
 import { createScraper, ScrapingError } from "./scraper.js"
 import { testVods } from "./validateVodlinks.js";
@@ -6,17 +7,18 @@ import { sampleSources } from "./sampleSources.js"
 import { saveTournament } from "./save.js"
 
 async function main() {
-    const tournament = await generateTournament(sampleSources[5]);
-    await saveTournament(tournament).catch(console.dir);;
+    const tournament = await generateTournament(sampleSources[7]);
+    await saveTournament(tournament).catch(console.dir);
 }
 
 async function generateTournament(sources) {
   try {
     const details = await getTournamentDetails(sources);
-    const matchBuckets = await getAllMatchBuckets(sources.matchSources);
+    const matchBuckets = await getAllMatchBuckets(details);
     const tournament = {
       details,
       matchBuckets,
+      _id: nanoid(12),
     }
     await testVods(tournament);
     return tournament;
@@ -37,12 +39,13 @@ async function getTournamentDetails(sources) {
   return parser.getTournamentDetails(sources);
 }
 
-function getMatchBuckets(source) {
+function getMatchBuckets(source, details) {
   const scraper = createScraper(source.url);
   return new Promise((resolve, reject) => {
     scraper.getDataStrings()
       .then((parserOptions) => {
         parserOptions.matchListBestOf = source.matchListBestOf ?? null;
+        parserOptions.tournamentDetails = details;
         return createParser(parserOptions);
       })
       .then(parser => {
@@ -53,9 +56,9 @@ function getMatchBuckets(source) {
   })
 }
 
-async function getAllMatchBuckets(sources) {
+async function getAllMatchBuckets(details) {
   try {
-    let buckets = await Promise.all(sources.map(getMatchBuckets));
+    let buckets = await Promise.all(details.sources.matchSources.map(source => getMatchBuckets(source, details)));
     buckets = buckets.flat();
     // if there is only one bracket, change the title to playoffs
     if (buckets.filter(bucket => bucket.type === 'bracket').length === 1) {
@@ -65,8 +68,8 @@ async function getAllMatchBuckets(sources) {
     // sort buckets by date of first match, then by title
     buckets = buckets.sort((a, b) => {
       //strip off hours and minutes to compare month and day only
-      const dateA = new Date(new Date(a.matches[0].isoTimeStart).toDateString());
-      const dateB = new Date(new Date(b.matches[0].isoTimeStart).toDateString());
+      const dateA = new Date(new Date(a.matches[0].dateStart).toDateString());
+      const dateB = new Date(new Date(b.matches[0].dateStart).toDateString());
       
       const titleA = a.title.toUpperCase();
       const titleB = b.title.toUpperCase();
