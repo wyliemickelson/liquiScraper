@@ -1,13 +1,14 @@
 import mongoose from 'mongoose'
 import * as dotenv from 'dotenv'
 dotenv.config()
+import chalk from 'chalk'
 mongoose.set('strictQuery', false)
 
 const url = process.env.MONGODB_URI
 
 mongoose.connect(url)
   .then(result => {
-    console.log('connected to MongoDB')
+    console.log(chalk.bgBlueBright.bold(' Connected to MongoDB '))
   })
   .catch((error) => {
     console.log('error connecting to MongoDB:', error.message)
@@ -25,7 +26,7 @@ const tournamentSchema = new mongoose.Schema({
       }]
     },
     title: String,
-    mainImgSrc: String,
+    logoSrc: String,
     gameType: String,
     dateStart: Date,
     dateEnd: Date,
@@ -33,6 +34,7 @@ const tournamentSchema = new mongoose.Schema({
     participants: [{
       _id: String,
       name: String,
+      shortName: String,
       logoSrc: String,
     }]
   },
@@ -43,7 +45,6 @@ const tournamentSchema = new mongoose.Schema({
     isCompleted: Boolean,
     matches: [{
       _id: String,
-      bracketRound: String,
       matchId: Number,
       dateStart: Date,
       isCompleted: Boolean,

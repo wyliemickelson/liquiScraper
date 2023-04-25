@@ -26,23 +26,23 @@ export function createParser(options) {
     const today = new Date(new Date().toDateString());
     const isCompleted = dateEnd < today;
 
-    let mainImgSrc = $('.infobox-image img').attr('src');
-    mainImgSrc = `https://www.liquipedia.net${mainImgSrc}`;
+    let logoSrc = $('.infobox-image img').attr('src');
+    logoSrc = `https://www.liquipedia.net${logoSrc}`;
 
     return {
       sources,
       title,
-      mainImgSrc: downloadImage(mainImgSrc),
+      logoSrc: downloadImage(logoSrc, 'eventLogo', title),
       gameType,
       dateStart,
       dateEnd,
       isCompleted,
-      participants: getTournamentTeams(),
+      participants: getTournamentTeams(title),
     }
   }
 
   //TODO - Refactor
-  function getTournamentTeams() {
+  function getTournamentTeams(tournamentTitle) {
     //TODO - find way to filter out showmatches or data from anything other than the main participants list
     const $teamCards = $('.teamcard');
     const teams = $teamCards.map((i, $teamCard) => {
@@ -52,7 +52,8 @@ export function createParser(options) {
       return {
         _id: nanoid(12),
         name,
-        logoSrc: downloadImage(logoSrc),
+        shortName: null,
+        logoSrc: downloadImage(logoSrc, name, tournamentTitle),
       }
     }).toArray();
     return teams;
@@ -120,7 +121,6 @@ export function createParser(options) {
       const { dateStart, isCompleted } = getMatchStart($match);
 
       return {
-        bracketRound: null,
         _id: nanoid(12),
         dateStart,
         isCompleted,

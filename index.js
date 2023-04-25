@@ -7,7 +7,7 @@ import { sampleSources } from "./sampleSources.js"
 import { saveTournament } from "./save.js"
 
 async function main() {
-    const tournament = await generateTournament(sampleSources[7]);
+    const tournament = await generateTournament(sampleSources[2]);
     await saveTournament(tournament).catch(console.dir);
 }
 
