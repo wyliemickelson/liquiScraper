@@ -1,20 +1,10 @@
-import { MongoClient } from "mongodb";
-import * as dotenv from 'dotenv'
-dotenv.config();
-
-const uri = process.env.MONGO_URI;
-
-const client = new MongoClient(uri);
+import Tournament from "./models/tournament.js"
+import mongoose from 'mongoose'
 
 export async function saveTournament(tournament) {
-  try {
-    const database = client.db("tournaments");
-    const haiku = database.collection("test");
-    // create a document to insert
-    const doc = tournament
-    const result = await haiku.insertOne(doc);
-    console.log(`A document was inserted with the _id: ${result.insertedId}`);
-  } finally {
-    await client.close();
-  }
+  const newTournament = new Tournament(tournament)
+  newTournament.save().then(() => {
+    console.log(`Saved ${tournament.details.gameType} ${tournament.details.title}`)
+    mongoose.connection.close()
+  })
 }
