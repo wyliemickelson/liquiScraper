@@ -54,7 +54,14 @@ function fetchValidYoutubeIds(ids) {
     }
   }).then(res => res.data.items)
     .then(data => data.map(video => video.id))
-    .catch(e => console.error(e))
+    .catch(e => {
+      if (e.message === 'socket hang up') {
+        console.log('retrying youtube vod validation')
+        fetchValidYoutubeIds(ids)
+      } else {
+        console.error(e)
+      }
+    })
 }
 
 async function fetchValidTwitchIds(ids) {
@@ -71,7 +78,14 @@ async function fetchValidTwitchIds(ids) {
     },
   }).then(res => res.data.data)
     .then(data => data.map(video => video.id))
-    .catch(() => [])
+    .catch((e) => {
+      if (e.message === 'socket hang up') {
+        console.log('retrying twitch vod validation')
+        fetchValidTwitchIds(ids)
+      } else {
+        return []
+      }
+    })
 }
 
 function getVods(tournament) {
