@@ -6,13 +6,15 @@ mongoose.set('strictQuery', false)
 
 const url = process.env.MONGODB_URI
 
-mongoose.connect(url)
+export const connectMongo = async () => {
+  await mongoose.connect(url)
   .then(result => {
     console.log(chalk.bgBlueBright.bold(' Connected to MongoDB '))
   })
   .catch((error) => {
     console.log('error connecting to MongoDB:', error.message)
   })
+}
 
 const tournamentSchema = new mongoose.Schema({
   _id: String,

@@ -26,7 +26,7 @@ export function createParser(options) {
     const today = new Date(new Date().toDateString());
     const isCompleted = dateEnd < today;
 
-    let logoSrc = $('.infobox-image img').attr('src');
+    let logoSrc = $('.infobox-image.darkmode img').attr('src');
     logoSrc = `https://www.liquipedia.net${logoSrc}`;
 
     return {
@@ -46,7 +46,9 @@ export function createParser(options) {
     //TODO - find way to filter out showmatches or data from anything other than the main participants list
     const $teamCards = $('.teamcard');
     const teams = $teamCards.map((i, $teamCard) => {
-      const name = $("center a", $teamCard).text();
+      let name = $("center a", $teamCard).text();
+      name = name.replaceAll(/\[.*?\]/g, '') // get rid of liquipedia edit tags
+      console.log(name)
       let logoSrc = $('.logo-darkmode img', $teamCard).attr('src');
       logoSrc = `https://www.liquipedia.net${logoSrc}`;
       return {
@@ -106,7 +108,7 @@ export function createParser(options) {
       $closestHeader = $($closestHeader).prev();
     }
     // get title content from header, stripping away edit boxes
-    let title = $($closestHeader).text().replace('[edit]', '');
+    let title = $($closestHeader).text().replaceAll(/\[.*?\]/g, '') // get rid of liquipedia edit tags
     title = (title === 'Results') ? 'Playoffs' : title
     return title;
   }
@@ -224,14 +226,12 @@ export function createParser(options) {
 
   function getBestOf(bucketType, winnerScore) {
     // match score is most likely a bo1 map score if the score is > 11
-    const bracket = () => {
+    const bestOfDefault = () => {
       if (winnerScore >= 11) return 1;
       return winnerScore * 2 - 1;
     }
-    const matchlist = () => {
-      return matchListBestOf;
-    }
-    return bucketType === 'bracket' ? bracket() : matchlist()
+    if (bucketType === 'bracket') return bestOfDefault()
+    return matchListBestOf ?? bestOfDefault()
   }
 
   function getMapWinner($match) {

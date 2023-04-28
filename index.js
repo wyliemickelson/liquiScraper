@@ -4,16 +4,24 @@ import { createParser } from "./parser.js";
 import { createScraper, ScrapingError } from "./scraper.js"
 import { testVods } from "./validateVodlinks.js";
 import { sampleSources } from "./sampleSources.js"
-import { saveTournament } from "./save.js"
+import { saveTournament, getTournament } from "./save.js"
+import mongoose from 'mongoose'
+import combineTournaments from './combine.js'
+import tournament from './models/tournament.js';
 
 async function main() {
-    const tournament = await generateTournament(sampleSources[2]);
+    // const oldTournament = await getTournament("4m2tPaCzB0cy")
+    // const newTournament = await generateTournament(oldTournament.details.sources, oldTournament.details)
+    // const combinedTournament = combineTournaments(oldTournament, newTournament)
+    // await saveTournament(combinedTournament).catch(console.dir);
+
+    const tournament = await generateTournament(sampleSources[1]);
     await saveTournament(tournament).catch(console.dir);
 }
 
-async function generateTournament(sources) {
+async function generateTournament(sources, tournamentDetails) {
   try {
-    const details = await getTournamentDetails(sources);
+    const details = tournamentDetails ?? await getTournamentDetails(sources);
     const matchBuckets = await getAllMatchBuckets(details);
     const tournament = {
       details,

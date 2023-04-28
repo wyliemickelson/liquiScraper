@@ -1,0 +1,6 @@
+CAN UPDATE IN DATABASE
+- any tournament details
+- bucket titles
+- vod objects
+- match revealed
+- match bestOf
