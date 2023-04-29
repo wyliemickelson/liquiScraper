@@ -1,10 +1,19 @@
-import util from 'util';
+import chalk from "chalk"
+// PROPERTIES THAT SHOULD NOT OVERWRITE ON UPDATE
+// - any tournament details
+// - any ids
+// - bucket titles
+// - vod objects (only overwrites if vod is not working or null)
+// - match revealed
+// - match bestOf
+
 const combineTournaments = (oldTournament, newTournament) => {
+  console.log(chalk.cyan('Combining details from old and generated tournament...'))
   const combined = {}
   // keep same details and id
 
   // for testing, use new id
-  combined._id = newTournament._id
+  combined._id = oldTournament._id
   // for testing, use new id
 
   combined.details = oldTournament.details
@@ -29,6 +38,7 @@ const combineTournaments = (oldTournament, newTournament) => {
     }
   })
 
+  console.log(chalk.blue('Successfully combined tournament.'))
   return combined
 }
 
@@ -53,7 +63,6 @@ const combineMatches = (oldMatches, newMatches) => {
 }
 
 const combineMatchData = (oldMatchData, newMatchData) => {
-  // only change vods
   // if old match has no data, return new match data
   if (!oldMatchData) return newMatchData
   // else, data exists in both

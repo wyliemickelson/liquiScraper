@@ -48,7 +48,6 @@ export function createParser(options) {
     const teams = $teamCards.map((i, $teamCard) => {
       let name = $("center a", $teamCard).text();
       name = name.replaceAll(/\[.*?\]/g, '') // get rid of liquipedia edit tags
-      console.log(name)
       let logoSrc = $('.logo-darkmode img', $teamCard).attr('src');
       logoSrc = `https://www.liquipedia.net${logoSrc}`;
       return {
@@ -195,7 +194,6 @@ export function createParser(options) {
     }
   }
 
-  //TODO - Refactor - get map name if game is valorant, csgo, or rocketleague
   function getMapData($match, gamesPlayed) {
     const $footer = $('.brkts-popup-footer', $match);
     const $vodlinks = $('.plainlinks a', $footer);

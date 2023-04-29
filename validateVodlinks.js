@@ -1,4 +1,5 @@
 import axios from 'axios';
+import chalk from 'chalk';
 import * as dotenv from 'dotenv'
 dotenv.config();
 
@@ -93,7 +94,11 @@ function getVods(tournament) {
   const vods = tournament.matchBuckets.map(bucket => {
     return bucket.matches.filter(match => match.isCompleted).map(match => {
       return match.matchData.mapData.filter(mapData => mapData.vod)
-        .map(mapData => mapData.vod);
+        .map(mapData => {
+          let vod = mapData.vod
+          vod.matchId = match._id
+          return vod
+        });
     })
   }).flat(2)
 
@@ -109,6 +114,7 @@ function filterVods(vods) {
     } catch {
       vod.videoId = null;
       vod.working = false;
+      console.log(chalk.red('Unavailable VOD at', chalk.magenta('matchId:'), chalk.yellow(vod.matchId)))
       return;
     }
 
@@ -137,6 +143,7 @@ function filterVods(vods) {
 function setStatus(vods, workingIds) {
   vods.forEach(vod => {
     const working = workingIds.includes(vod.videoId);
+    if (!working) console.log(chalk.red('Unavailable VOD at', chalk.magenta('matchId:'), chalk.yellow(vod.matchId)))
     vod.working = working;
   })
 }

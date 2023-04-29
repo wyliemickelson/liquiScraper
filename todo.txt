@@ -1,6 +1,5 @@
-CAN UPDATE IN DATABASE
-- any tournament details
-- bucket titles
-- vod objects
-- match revealed
-- match bestOf
+TODO
+- make function to get all uncompleted tournaments in DATABASE
+- make function that will update all uncompleted tournaments, waiting 30 seconds between updates in order to comply with liquipedia api guidelines and not overload their server
+- refactor generating tournament to also wait 30 seconds between fetches to liquipedia
+- set abbreviated team names in scraper instead of frontend, that way they are editable
