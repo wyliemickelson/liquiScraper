@@ -114,6 +114,7 @@ function filterVods(vods) {
     } catch {
       vod.videoId = null;
       vod.working = false;
+      delete vod.matchId;
       console.log(chalk.red('Unavailable VOD at', chalk.magenta('matchId:'), chalk.yellow(vod.matchId)))
       return;
     }
@@ -144,6 +145,7 @@ function setStatus(vods, workingIds) {
   vods.forEach(vod => {
     const working = workingIds.includes(vod.videoId);
     if (!working) console.log(chalk.red('Unavailable VOD at', chalk.magenta('matchId:'), chalk.yellow(vod.matchId)))
+    delete vod.matchId;
     vod.working = working;
   })
 }

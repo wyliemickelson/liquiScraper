@@ -14,6 +14,7 @@ export class ScrapingError extends Error {
 }
 
 export function createScraper(liquipediaUrl) {
+  const useCache = false; // set to false when in production
   const url = new URL(liquipediaUrl);
   const gameType = getGame();
   const pageTitle = getPageTitle();
@@ -50,22 +51,24 @@ export function createScraper(liquipediaUrl) {
     await fs.writeFile(`./cache/${pageId}-html.text`, htmlStr);
   }
 
+  async function checkCache() {
+    const fileExists = async (path) => (await fs.stat(path).catch(e => false));
+    if (await fileExists(`./cache/${pageId}-html.text`)) {
+      return await fs.readFile(`./cache/${pageId}-html.text`);
+    }
+    return null;
+  }
+
   async function getDataStrings() {
     validateUrl();
     const idRequest = getIdRequest();
     pageId = await fetchPageId(idRequest);
     let htmlStr;
     
-    //TODO - caching only needed for testing, reformat later
-    const fileExists = async (path) => !!(await fs.stat(path).catch(e => false));
-    if (await fileExists(`./cache/${pageId}-html.text`)) {
-      htmlStr = await fs.readFile(`./cache/${pageId}-html.text`);
-    } else {
-      const htmlRequest = getHtmlRequest();
-      htmlStr = await fetchHtml(htmlRequest);
-  
-      await cacheDataStrings(htmlStr);
-    }
+    if (useCache) htmlStr = await checkCache()
+    const htmlRequest = getHtmlRequest();
+    htmlStr = htmlStr ?? await fetchHtml(htmlRequest);
+    if (useCache) cacheDataStrings(htmlStr);
 
     return {
       htmlStr,
