@@ -23,7 +23,7 @@ async function updateTournament(tournamentId) {
   await replaceTournament(combinedTournament).catch(console.dir);
 }
 
-async function updateOngoingTournaments() {
+export async function updateOngoingTournaments() {
   const ongoingTournaments = await getOngoingTournaments()
   for (let i = 0; i < ongoingTournaments.length; i++) {
     const tournamentToUpdate = ongoingTournaments[i]
@@ -140,13 +140,8 @@ async function getAllMatchBuckets(details) {
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-function sayHello() {
+export function sayHello() {
   console.log('hello')
 }
 
 main();
-
-module.exports = {
-  sayHello,
-  updateOngoingTournaments,
-}

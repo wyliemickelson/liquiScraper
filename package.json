@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "description": "",
-  "main": "index.js",
+  "main": "packageExports.js",
   "scripts": {
     "start": "node index.js && cp -r ./exported ./../esport-vods/src/assets",
     "test": "mocha || true"
@@ -21,11 +21,10 @@
     "closest-match": "^1.3.3",
     "dotenv": "^16.0.3",
     "image-downloader": "^4.3.0",
+    "liquiscraper": "^1.0.0",
     "moment": "^2.29.4",
     "mongodb": "^5.1.0",
     "mongoose": "^7.0.3",
     "nanoid": "^4.0.2"
   }
 }
-
-
