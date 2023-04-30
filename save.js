@@ -1,11 +1,14 @@
-import Tournament from "./models/tournament.js"
+import tournamentSchema from "./models/tournament.js"
 import mongoose from 'mongoose'
 import chalk from "chalk"
 import { connectMongo } from "./models/tournament.js"
 
+const TournamentScreening = mongoose.model('Tournament', tournamentSchema, 'tournaments-screening')
+const TournamentProd = mongoose.model('Tournament', tournamentSchema, 'tournaments-production')
+
 export async function saveTournament(tournament) {
   await connectMongo()
-  const newTournament = new Tournament(tournament)
+  const newTournament = new TournamentScreening(tournament)
   await newTournament.save().then(() => {
     console.log(chalk.bgGreen.bold(' Tournament saved to database '))
     console.log(chalk.magenta('Title:'), chalk.yellow(tournament.details.title))
@@ -16,8 +19,8 @@ export async function saveTournament(tournament) {
 
 export async function replaceTournament(updatedTournament) {
   await connectMongo()
-  const doc = new Tournament(updatedTournament)
-  await Tournament.replaceOne({ _id: updatedTournament._id }, doc).then(() => {
+  const doc = new TournamentProd(updatedTournament)
+  await TournamentProd.replaceOne({ _id: updatedTournament._id }, doc).then(() => {
     console.log(chalk.bgGreen.bold(' Tournament updated in database '))
     console.log(chalk.magenta('Title:'), chalk.yellow(updatedTournament.details.title))
     console.log(chalk.magenta('Game:'), chalk.yellow(updatedTournament.details.gameType))
@@ -27,7 +30,7 @@ export async function replaceTournament(updatedTournament) {
 
 export async function getOngoingTournaments() {
   await connectMongo()
-  return await Tournament.find({ "details.isCompleted": false }).then((tournaments) => {
+  return await TournamentProd.find({ "details.isCompleted": false }).then((tournaments) => {
     mongoose.connection.close()
     console.log(chalk.bgGreen.bold(' Retrieved ongoing tournaments. '))
     return tournaments
@@ -36,7 +39,7 @@ export async function getOngoingTournaments() {
 
 export async function getTournament(tournamentId) {
   await connectMongo()
-  return await Tournament.find({ "_id": tournamentId }).then((tournaments) => {
+  return await TournamentProd.find({ "_id": tournamentId }).then((tournaments) => {
     mongoose.connection.close()
     console.log(chalk.bgGreen.bold(' Retrieved Tournament '))
     return tournaments[0]
