@@ -146,4 +146,7 @@ function sayHello() {
 
 main();
 
-exports.sayHello = sayHello
+module.exports = {
+  sayHello,
+  updateOngoingTournaments,
+}
