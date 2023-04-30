@@ -140,4 +140,13 @@ async function getAllMatchBuckets(details) {
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
+function sayHello() {
+  console.log('hello')
+}
+
 main();
+
+module.exports = {
+  updateOngoingTournaments,
+  sayHello,
+}
