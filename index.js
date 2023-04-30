@@ -8,7 +8,7 @@ import { saveTournament, getTournament, getOngoingTournaments, replaceTournament
 import combineTournaments from './combine.js'
 
 async function main() {
-  updateOngoingTournaments()
+  createTournament(sampleSources[2])
 }
 
 async function createTournament(sources) {

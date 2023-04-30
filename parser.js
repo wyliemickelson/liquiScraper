@@ -41,9 +41,20 @@ export function createParser(options) {
     }
   }
 
-  //TODO - Refactor
+  const shortenName = (name) => {
+    if (name.length <= 3) {
+      return name
+    }
+    const words = name.split(' ')
+    // multiple 'words'
+    if (words.length > 1) {
+      return name.match(/\b\w/g).join('')
+    }
+    // one word
+    return name.slice(0, 3).toUpperCase()
+  }
+
   function getTournamentTeams(tournamentTitle) {
-    //TODO - find way to filter out showmatches or data from anything other than the main participants list
     const $teamCards = $('.teamcard');
     const teams = $teamCards.map((i, $teamCard) => {
       let name = $("center a", $teamCard).text();
@@ -53,7 +64,7 @@ export function createParser(options) {
       return {
         _id: nanoid(12),
         name,
-        shortName: null,
+        shortName: shortenName(name),
         logoSrc: downloadImage(logoSrc, name, tournamentTitle),
       }
     }).toArray();
@@ -164,15 +175,11 @@ export function createParser(options) {
       const teamMatch = tournamentDetails.participants.find(p => p.name === nameMatch)
       const teamId = teamMatch._id
     
-      // let logoSrc = $('.team-template-darkmode img', $team).attr('src');
-      // logoSrc = `https://www.liquipedia.net${logoSrc}`
       const score = $($scores.get(i)).text();
 
       return {
         _id: teamId,
-        // name,
         score,
-        // logoSrc: downloadImage(logoSrc),
       }
     }).toArray();
 

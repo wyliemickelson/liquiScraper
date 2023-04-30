@@ -1,6 +1,6 @@
 node_modules
 index.html
-plans.text
+*.txt
 cache
 .env
 sampleSources.js
