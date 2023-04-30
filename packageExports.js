@@ -1,6 +1,4 @@
 import { sayHello, updateOngoingTournaments } from './index.js'
 
-exports = {
-  sayHello,
-  updateOngoingTournaments,
-}
+exports.sayHello = sayHello
+exports.updateOngoingTournaments = updateOngoingTournaments
