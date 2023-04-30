@@ -134,7 +134,3 @@ async function getAllMatchBuckets(details) {
 }
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
-
-export function sayHello() {
-  console.log('hello')
-}
