@@ -146,7 +146,4 @@ function sayHello() {
 
 main();
 
-module.exports = {
-  updateOngoingTournaments,
-  sayHello,
-}
+exports.sayHello = sayHello
