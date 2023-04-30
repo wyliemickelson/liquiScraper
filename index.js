@@ -3,15 +3,10 @@ import { nanoid } from 'nanoid'
 import { createParser } from "./parser.js";
 import { createScraper, ScrapingError } from "./scraper.js"
 import { testVods } from "./validateVodlinks.js";
-import { sampleSources } from "./sampleSources.js"
 import { saveTournament, getTournament, getOngoingTournaments, replaceTournament } from "./save.js"
 import combineTournaments from './combine.js'
 
-async function main() {
-  createTournament(sampleSources[2])
-}
-
-async function createTournament(sources) {
+export async function createTournament(sources) {
   const tournament = await generateTournament(sources);
   await saveTournament(tournament).catch(console.dir);
 }
@@ -143,5 +138,3 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 export function sayHello() {
   console.log('hello')
 }
-
-main();
