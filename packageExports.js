@@ -1,6 +1,6 @@
 import { sayHello, updateOngoingTournaments } from './index.js'
 
-exports.default = {
+module.exports = {
   sayHello,
   updateOngoingTournaments,
 }
