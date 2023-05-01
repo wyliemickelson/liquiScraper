@@ -17,7 +17,7 @@ export function createParser(options) {
 
   function getTournamentDetails(sources) {
     // some titles have linkboxes with text [e][h], so trim them
-    const title = $('.infobox-header').first().text().replace('[e][h]', '');
+    const title = $('.infobox-header').first().text().replaceAll(/\[.*?\]/g, '') // get rid of liquipedia edit tags
 
     //strip off hours and minutes to compare month and day only
     const dateStart = new Date(new Date(getSideBarInfo('Start Date:')).toDateString());
@@ -43,12 +43,12 @@ export function createParser(options) {
 
   const shortenName = (name) => {
     if (name.length <= 3) {
-      return name
+      return name.toUpperCase()
     }
     const words = name.split(' ')
     // multiple 'words'
     if (words.length > 1) {
-      return name.match(/\b\w/g).join('')
+      return name.match(/\b\w/g).join('').toUpperCase()
     }
     // one word
     return name.slice(0, 3).toUpperCase()
@@ -136,7 +136,7 @@ export function createParser(options) {
         _id: nanoid(12),
         dateStart,
         isCompleted,
-        revealed: bucketType === 'matchlist',
+        revealed: bucketType === 'matchlist' || !isCompleted,
         matchData: isCompleted ? getMatchData($match, bucketType) : null,
       }
     }).toArray();
@@ -179,6 +179,7 @@ export function createParser(options) {
 
       return {
         _id: teamId,
+        name: teamMatch.name,
         score,
       }
     }).toArray();

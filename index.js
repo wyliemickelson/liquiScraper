@@ -26,7 +26,7 @@ export async function updateOngoingTournaments() {
     await updateTournament(tournamentToUpdate._id)
     // if it is last tournament, don't wait
     if (i !== ongoingTournaments.length - 1) {
-      console.log(chalk.red('Waiting 5 seconds until updating next tournament...'))
+      console.log(chalk.red('Waiting 30 seconds until updating next tournament...'))
       await delay(5000)
       console.log(chalk.red('Wait complete'))
     }
@@ -43,7 +43,7 @@ async function generateTournament(sources, tournamentDetails) {
   try {
     const details = tournamentDetails ?? await getTournamentDetails(sources);
     if (!tournamentDetails) {
-      console.log(chalk.red('Waiting 5 seconds until fetching next page...'))
+      console.log(chalk.red('Waiting 30 seconds until fetching next page...'))
       await delay(5000)
       console.log(chalk.red('Wait complete'))
     } else {

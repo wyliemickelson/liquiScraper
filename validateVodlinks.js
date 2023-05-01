@@ -114,8 +114,8 @@ function filterVods(vods) {
     } catch {
       vod.videoId = null;
       vod.working = false;
-      delete vod.matchId;
       console.log(chalk.red('Unavailable VOD at', chalk.magenta('matchId:'), chalk.yellow(vod.matchId)))
+      delete vod.matchId;
       return;
     }
 

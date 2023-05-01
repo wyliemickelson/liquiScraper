@@ -11,7 +11,7 @@ export function downloadImage(url, fileName, pathName) {
 
   const formattedPath = `exported/images/${replaceSpecials(pathName)}`
   const formattedFileName = `${replaceSpecials(fileName)}.png`
-  const newSrc = `${formattedPath}/${formattedFileName}`
+  const src = `${formattedPath}/${formattedFileName}`
 
   console.log(chalk.cyan('Attempting image download...'))
   console.log(chalk.magenta('URL:'), chalk.yellow(url))
@@ -21,14 +21,14 @@ export function downloadImage(url, fileName, pathName) {
     fs.mkdirSync(formattedPath, { recursive: true });
   }
 
-  if (fs.existsSync(`./${newSrc}`)) {
+  if (fs.existsSync(`./${src}`)) {
     console.log(chalk.blue('image already saved'))
-    return newSrc
+    return src
   }
 
   download.image({
     url,
-    dest: `./../../${newSrc}`
+    dest: `./../../${src}`
   }).then(console.log(chalk.green('image downloaded')))
   .catch(e => {
     if (e.message === 'socket hang up') {
@@ -36,5 +36,6 @@ export function downloadImage(url, fileName, pathName) {
       downloadImage(url)
     }
   })
-  return newSrc
+
+  return src
 }

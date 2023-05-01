@@ -56,10 +56,12 @@ const tournamentSchema = new mongoose.Schema({
         bestOf: Number,
         team1: {
           _id: String,
+          name: String,
           score: String,
         },
         team2: {
           _id: String,
+          name: String,
           score: String,
         },
         mapData: [{
