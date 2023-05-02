@@ -1,12 +1,12 @@
-import mongoose from 'mongoose'
-import * as dotenv from 'dotenv'
+const mongoose = require('mongoose')
+const dotenv = require('dotenv')
 dotenv.config()
-import chalk from 'chalk'
+const chalk = require('chalk')
 mongoose.set('strictQuery', false)
 
 const url = process.env.MONGODB_URI
 
-export const connectMongo = async () => {
+const connectMongo = async () => {
   await mongoose.connect(url)
   .then(result => {
     console.log(chalk.bgBlueBright.bold(' Connected to MongoDB '))
@@ -79,4 +79,7 @@ const tournamentSchema = new mongoose.Schema({
   }]
 })
 
-export default tournamentSchema
+module.exports = {
+  tournamentSchema,
+  connectMongo,
+}

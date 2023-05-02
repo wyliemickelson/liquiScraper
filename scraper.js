@@ -1,4 +1,4 @@
-import { promises as fs } from 'fs';
+const fs = require('fs').promises
 
 const headers = {
   "User-Agent": "Spoiler Free Esport Vod Site (wyliecoyote910@gmail.com)",
@@ -6,14 +6,14 @@ const headers = {
 };
 
 // Custom error for api calls
-export class ScrapingError extends Error {
+class ScrapingError extends Error {
   constructor(message) {
     super(message);
     this.name = "ScrapingError";
   }
 }
 
-export function createScraper(liquipediaUrl) {
+function createScraper(liquipediaUrl) {
   const useCache = false; // set to false when in production
   const url = new URL(liquipediaUrl);
   const gameType = getGame();
@@ -107,4 +107,9 @@ export function createScraper(liquipediaUrl) {
   return {
     getDataStrings,
   }
+}
+
+module.exports = {
+  ScrapingError,
+  createScraper,
 }

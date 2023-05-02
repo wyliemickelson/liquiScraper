@@ -1,4 +1,4 @@
-import chalk from "chalk"
+const chalk = require('chalk')
 // PROPERTIES THAT SHOULD NOT OVERWRITE ON UPDATE
 // - any tournament details
 // - any ids
@@ -93,4 +93,6 @@ const checkTournamentCompleted = (newTournament) => {
   return now.getTime() > dayAfterDateEnd.getTime()
 }
 
-export default combineTournaments
+module.exports = {
+  combineTournaments,
+}

@@ -1,5 +1,5 @@
-import { createTournament } from "./index.js";
-import { sampleSources } from "./sampleSources.js"
+const { createTournament } = require('./index.js')
+const { sampleSources } = require('./sampleSources.js')
 
 async function main() {
   createTournament(sampleSources[0])

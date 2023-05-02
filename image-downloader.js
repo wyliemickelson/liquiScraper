@@ -1,8 +1,9 @@
-import download from 'image-downloader'
-import fs from 'fs'
-import chalk from 'chalk'
+const download = require('image-downloader')
+const fs = require('fs')
+const chalk = require('chalk')
+const Jimp = require('jimp')
 
-export function downloadImage(url, fileName, pathName) {
+function downloadImage(url, fileName, pathName) {
   
   const replaceSpecials = (string) => {
     var specials = /[^A-Za-z 0-9]/g;
@@ -30,6 +31,15 @@ export function downloadImage(url, fileName, pathName) {
     url,
     dest: `./../../${src}`
   }).then(console.log(chalk.green('image downloaded')))
+  .then(() => {
+    Jimp.read(`./${src}`)
+      .then(img => {
+        const maxSize = fileName === 'eventLogo' ? 120 : 70
+        return img
+          .scaleToFit(maxSize, maxSize)
+          .write(`./${src}`)
+      })
+  })
   .catch(e => {
     if (e.message === 'socket hang up') {
       console.log(chalk.yellow('socket hung up, retrying download'))
@@ -38,4 +48,8 @@ export function downloadImage(url, fileName, pathName) {
   })
 
   return src
+}
+
+module.exports = {
+  downloadImage,
 }

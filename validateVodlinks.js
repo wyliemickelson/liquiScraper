@@ -1,9 +1,9 @@
-import axios from 'axios';
-import chalk from 'chalk';
-import * as dotenv from 'dotenv'
+const axios = require('axios')
+const chalk = require('chalk')
+const dotenv = require('dotenv')
 dotenv.config();
 
-export async function testVods(tournament) {
+async function testVods(tournament) {
   const vods = getVods(tournament);
   const { twitchVods, youtubeVods } = filterVods(vods);
 
@@ -161,4 +161,8 @@ function generateTwitchToken() {
     }
   }).then(res => res.data.access_token)
     .catch(e => console.error(e))
+}
+
+module.exports = {
+  testVods,
 }

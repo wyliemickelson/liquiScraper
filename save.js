@@ -1,12 +1,12 @@
-import tournamentSchema from "./models/tournament.js"
-import mongoose from 'mongoose'
-import chalk from "chalk"
-import { connectMongo } from "./models/tournament.js"
+const { tournamentSchema } = require('./models/tournament.js')
+const mongoose = require('mongoose')
+const chalk = require('chalk')
+const { connectMongo } = require('./models/tournament.js')
 
 const TournamentScreening = mongoose.model('Tournament', tournamentSchema, 'tournaments-screening')
 const TournamentProd = mongoose.model('Tournament', tournamentSchema, 'tournaments-production')
 
-export async function saveTournament(tournament) {
+async function saveTournament(tournament) {
   await connectMongo()
   const newTournament = new TournamentScreening(tournament)
   await newTournament.save().then(() => {
@@ -17,7 +17,7 @@ export async function saveTournament(tournament) {
   })
 }
 
-export async function replaceTournament(updatedTournament) {
+async function replaceTournament(updatedTournament) {
   const doc = new TournamentProd(updatedTournament)
   await TournamentProd.replaceOne({ _id: updatedTournament._id }, doc).then(() => {
     console.log(chalk.bgGreen.bold(' Tournament updated in database '))
@@ -26,16 +26,23 @@ export async function replaceTournament(updatedTournament) {
   })
 }
 
-export async function getOngoingTournaments() {
+async function getOngoingTournaments() {
   return await TournamentProd.find({ "details.isCompleted": false }).then((tournaments) => {
     console.log(chalk.bgGreen.bold(' Retrieved ongoing tournaments. '))
     return tournaments
   })
 }
 
-export async function getTournament(tournamentId) {
+async function getTournament(tournamentId) {
   return await TournamentProd.find({ "_id": tournamentId }).then((tournaments) => {
     console.log(chalk.bgGreen.bold(' Retrieved Tournament '))
     return tournaments[0]
   })
+}
+
+module.exports = {
+  saveTournament,
+  replaceTournament,
+  getOngoingTournaments,
+  getTournament,
 }

@@ -1,12 +1,12 @@
-import chalk from "chalk"
-import { nanoid } from 'nanoid'
-import { createParser } from "./parser.js";
-import { createScraper, ScrapingError } from "./scraper.js"
-import { testVods } from "./validateVodlinks.js";
-import { saveTournament, getTournament, getOngoingTournaments, replaceTournament } from "./save.js"
-import combineTournaments from './combine.js'
+const chalk = require('chalk')
+const { nanoid } = require('nanoid')
+const { createParser } = require('./parser.js')
+const { createScraper, ScrapingError } = require('./scraper.js')
+const { testVods } = require('./validateVodlinks.js')
+const { saveTournament, getTournament, getOngoingTournaments, replaceTournament } = require('./save.js')
+const { combineTournaments } = require('./combine.js')
 
-export async function createTournament(sources) {
+async function createTournament(sources) {
   const tournament = await generateTournament(sources);
   await saveTournament(tournament).catch(console.dir);
 }
@@ -18,7 +18,7 @@ async function updateTournament(tournamentId) {
   await replaceTournament(combinedTournament).catch(console.dir);
 }
 
-export async function updateOngoingTournaments() {
+async function updateOngoingTournaments() {
   const ongoingTournaments = await getOngoingTournaments()
   for (let i = 0; i < ongoingTournaments.length; i++) {
     const tournamentToUpdate = ongoingTournaments[i]
@@ -134,3 +134,8 @@ async function getAllMatchBuckets(details) {
 }
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
+
+module.exports = {
+  createTournament,
+  updateOngoingTournaments,
+}

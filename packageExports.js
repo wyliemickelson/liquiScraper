@@ -1,5 +1,10 @@
-import { updateOngoingTournaments } from './index.js'
+const { updateOngoingTournaments } = require('./index.js')
 
-export default {
+const sayHello = () => {
+  console.log('hello')
+}
+
+module.exports = {
   updateOngoingTournaments,
+  sayHello,
 }

@@ -1,11 +1,11 @@
-import * as cheerio from 'cheerio';
-import moment from 'moment';
-import { nanoid } from 'nanoid'
-import { downloadImage } from './image-downloader.js'
-import { closestMatch } from 'closest-match';
+const cheerio = require('cheerio')
+const moment = require('moment')
+const { nanoid } = require('nanoid')
+const { downloadImage } = require('./image-downloader.js')
+const { closestMatch } = require('closest-match')
 moment().utc().format();
 
-export function createParser(options) {
+function createParser(options) {
   const { htmlStr, gameType, matchListBestOf, tournamentDetails } = options;
   const $ = cheerio.load(htmlStr);
 
@@ -282,3 +282,6 @@ export function createParser(options) {
   }
 }
 
+module.exports = {
+  createParser,
+}
