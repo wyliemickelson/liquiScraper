@@ -44,7 +44,7 @@ async function generateTournament(sources, tournamentDetails) {
     const details = tournamentDetails ?? await getTournamentDetails(sources);
     if (!tournamentDetails) {
       console.log(chalk.red('Waiting 30 seconds until fetching next page...'))
-      await delay(5000)
+      await delay(30000)
       console.log(chalk.red('Wait complete'))
     } else {
       console.log(chalk.blue('Tournament details already provided.'))
@@ -108,8 +108,8 @@ async function getAllMatchBuckets(details) {
       buckets = [...buckets, ...newBuckets]
       // if it is last source, don't wait
       if (i !== matchSources.length - 1) {
-        console.log(chalk.red('Waiting 5 seconds until fetching next page...'))
-        await delay(5000)
+        console.log(chalk.red('Waiting 30 seconds until fetching next page...'))
+        await delay(30000)
         console.log(chalk.red('Wait complete'))
       }
     }
