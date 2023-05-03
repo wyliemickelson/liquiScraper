@@ -34,7 +34,7 @@ function downloadImage(url, fileName, pathName) {
   .then(() => {
     Jimp.read(`./${src}`)
       .then(img => {
-        const maxSize = fileName === 'eventLogo' ? 120 : 70
+        const maxSize = fileName === 'eventLogo' ? 120 : 100
         return img
           .scaleToFit(maxSize, maxSize)
           .write(`./${src}`)

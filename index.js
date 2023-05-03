@@ -15,6 +15,7 @@ async function updateTournament(tournamentId) {
   const oldTournament = await getTournament(tournamentId)
   const newTournament = await generateTournament(oldTournament.details.sources, oldTournament.details)
   const combinedTournament = combineTournaments(oldTournament, newTournament)
+  await testVods(combinedTournament)
   await replaceTournament(combinedTournament).catch(console.dir);
 }
 
@@ -122,6 +123,8 @@ async function getAllMatchBuckets(details) {
     // sort buckets by date of first match, then by title
     buckets = buckets.sort((a, b) => {
       //strip off hours and minutes to compare month and day only
+      if (!a.matches[0].dateStart) return 1 //bubble to bottom if no dateStart
+      if (!b.matches[0].dateStart) return -1 //bubble to bottom if no dateStart
       const dateA = new Date(new Date(a.matches[0].dateStart).toDateString());
       const dateB = new Date(new Date(b.matches[0].dateStart).toDateString());
 

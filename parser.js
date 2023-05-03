@@ -257,6 +257,7 @@ function createParser(options) {
     const dirtyTimeStr = $timer.text();
     const timeZone = $('.timer-object abbr', $match).attr('data-tz');
     let dateStart = liquiTimeToIso(dirtyTimeStr, timeZone);
+    if (dirtyTimeStr === '') dateStart = null
     dateStart = isNaN(dateStart) ? null : dateStart
 
     return {
