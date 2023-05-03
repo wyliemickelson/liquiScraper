@@ -28,7 +28,7 @@ async function updateOngoingTournaments() {
     // if it is last tournament, don't wait
     if (i !== ongoingTournaments.length - 1) {
       console.log(chalk.red('Waiting 30 seconds until updating next tournament...'))
-      await delay(5000)
+      await delay(30000)
       console.log(chalk.red('Wait complete'))
     }
   }
