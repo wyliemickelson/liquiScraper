@@ -76,8 +76,10 @@ const combineMatchData = (oldMatchData, newMatchData) => {
 const combineMapData = (oldMapData, newMapData) => {
   return newMapData.map((newMap, i) => {
     const oldMap = oldMapData[i]
-    // only use new vod if the old one is not working or doesnt exist
+    // only use new vod if the old one is not working or doesnt exist, or the old is twitch
+    const isOldVodTwitch = oldMap.vod?.url.toLowerCase().includes('twitch')
     let returnedVod = (oldMap.vod && oldMap.vod.working) ? oldMap.vod : newMap.vod
+    returnedVod = (isOldVodTwitch && newMap.vod && newMap.vod.working) ? newMap.vod : returnedVod
     return {
       ...newMapData,
       _id: oldMap._id,

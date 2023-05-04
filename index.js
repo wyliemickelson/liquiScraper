@@ -13,9 +13,9 @@ async function createTournament(sources) {
 
 async function updateTournament(tournamentId) {
   const oldTournament = await getTournament(tournamentId)
+  await testVods(oldTournament)
   const newTournament = await generateTournament(oldTournament.details.sources, oldTournament.details)
   const combinedTournament = combineTournaments(oldTournament, newTournament)
-  await testVods(combinedTournament)
   await replaceTournament(combinedTournament).catch(console.dir);
 }
 
