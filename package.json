@@ -5,8 +5,8 @@
   "description": "",
   "main": "packageExports.js",
   "scripts": {
-    "start": "node dev.js && npm run new-tournament",
-    "add": "node dev.js && cp -r ./exported ./../esport-vods/public/assets && npm run new-tournament",
+    "start": "node publisher.js && npm run new-tournament",
+    "add": "node publisher.js && cp -r ./exported ./../esport-vods/public/assets && npm run new-tournament",
     "new-tournament": "cd ./../esport-vods && npm run build && npm run new-tournament && cd ./../esport-vods-server && rm -r ./build && cd ./../esport-vods && cp -r ./build ./../esport-vods-server/build && cd ./../esport-vods-server && npm run new-tournament",
     "test": "mocha || true"
   },
