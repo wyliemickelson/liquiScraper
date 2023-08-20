@@ -136,7 +136,7 @@ function createParser(options) {
         _id: nanoid(12),
         dateStart,
         isCompleted,
-        revealed: bucketType === 'matchlist' || !isCompleted,
+        revealed: bucketType === 'matchlist',
         matchData: isCompleted ? getMatchData($match, bucketType) : null,
       }
     }).toArray();

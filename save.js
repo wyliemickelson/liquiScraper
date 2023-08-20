@@ -18,24 +18,30 @@ async function saveTournament(tournament) {
 }
 
 async function replaceTournament(updatedTournament) {
+  await connectMongo()
   const doc = new TournamentProd(updatedTournament)
   await TournamentProd.replaceOne({ _id: updatedTournament._id }, doc).then(() => {
     console.log(chalk.bgGreen.bold(' Tournament updated in database '))
     console.log(chalk.magenta('Title:'), chalk.yellow(updatedTournament.details.title))
     console.log(chalk.magenta('Game:'), chalk.yellow(updatedTournament.details.gameType))
+    mongoose.connection.close()
   })
 }
 
 async function getOngoingTournaments() {
+  await connectMongo()
   return await TournamentProd.find({ "details.isCompleted": false }).then((tournaments) => {
     console.log(chalk.bgGreen.bold(' Retrieved ongoing tournaments. '))
+    mongoose.connection.close()
     return tournaments
   })
 }
 
 async function getTournament(tournamentId) {
+  await connectMongo()
   return await TournamentProd.find({ "_id": tournamentId }).then((tournaments) => {
     console.log(chalk.bgGreen.bold(' Retrieved Tournament '))
+    mongoose.connection.close()
     return tournaments[0]
   })
 }

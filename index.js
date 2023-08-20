@@ -21,6 +21,7 @@ async function updateTournament(tournamentId) {
 
 async function updateOngoingTournaments() {
   const ongoingTournaments = await getOngoingTournaments()
+  console.log(chalk.yellow(`Found ${ongoingTournaments.length} ongoing tournaments.`))
   for (let i = 0; i < ongoingTournaments.length; i++) {
     const tournamentToUpdate = ongoingTournaments[i]
     console.log(chalk.bgCyan.bold('Updating tournament'), chalk.bgCyan.magenta('Title:'), chalk.bgCyan.yellow(tournamentToUpdate.details.title), chalk.cyan('...'))

@@ -40,7 +40,6 @@ async function getWorkingIds(vods, site) {
   const workingIds = await Promise.all(videoIdChunks.map(async (idChunk) => {
     return await siteSettings[site].fetchValidIds(idChunk);
   })).then(chunks => chunks.flat())
-
   return workingIds;
 }
 
@@ -125,7 +124,7 @@ function filterVods(vods) {
       twitchVods.push(vod);
     }
     else if (vodUrl.origin === 'https://youtu.be') {
-      const videoId = vodUrl.pathname.split('/')[1];
+      const videoId = vodUrl.pathname.split('/')[1].split('&')[0];
       vod.videoId = videoId;
       youtubeVods.push(vod);
     } else if (vodUrl.origin === 'https://www.youtube.com') {
